@@ -1,0 +1,274 @@
+---
+# PersistentVolumeClaim for 数据存储
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ghx-pvc
+  namespace: gpu-health-expert
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: <your-storage-class-name>
+---
+# ConfigMap for frontend environment variables
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pb-env-config
+  namespace: gpu-health-expert
+data:
+  env.js: |
+    window.NEXT_PUBLIC_API_URL='<your-backend-service-url>';
+---
+# GPU基准值ConfigMap（前后端通用）
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gpu-benchmarks-config
+  namespace: gpu-health-expert
+data:
+  gpu-benchmarks.json: |
+    {
+      "RTX 3090": {"p2p": 18, "nccl": 7, "bw": 20},
+      "L40S": {"p2p": 28, "nccl": 8, "bw": 20},
+      "RTX 4090": {"p2p": 18, "nccl": 7, "bw": 20},
+      "A100": {"p2p": 420, "nccl": 70, "bw": 20},
+      "A800": {"p2p": 340, "nccl": 55, "bw": 20},
+      "H100": {"p2p": 700, "nccl": 139, "bw": 40},
+      "H800": {"p2p": 340, "nccl": 65, "bw": 47},
+      "H20": {"p2p": 700, "nccl": 139, "bw": 47},
+      "H200": {"p2p": 730, "nccl": 145, "bw": 54}
+    }
+  env.js: |
+    window.GPU_BENCHMARKS = {
+      "RTX 3090": {"p2p": 18, "nccl": 7, "bw": 20},
+      "L40S": {"p2p": 28, "nccl": 8, "bw": 20},
+      "RTX 4090": {"p2p": 18, "nccl": 7, "bw": 20},
+      "A100": {"p2p": 420, "nccl": 70, "bw": 20},
+      "A800": {"p2p": 340, "nccl": 55, "bw": 20},
+      "H100": {"p2p": 700, "nccl": 139, "bw": 40},
+      "H800": {"p2p": 340, "nccl": 65, "bw": 47},
+      "H20": {"p2p": 700, "nccl": 139, "bw": 47},
+      "H200": {"p2p": 730, "nccl": 145, "bw": 54}
+    }
+---
+# GPU检查CronJob - 在每个GPU节点上运行
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ghx-cronjob
+  namespace: gpu-health-expert
+spec:
+  schedule: "0 4 * * *"  # 每天凌晨4点执行
+  concurrencyPolicy: Allow  # 允许并发执行
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    metadata:
+      labels:
+        job-type: cron
+    spec:
+      parallelism: 5    # 最大并发 Job 数
+      completions: 5    # 总需完成的 Job 数（假设有 10 个节点）
+      ttlSecondsAfterFinished: 60  # Job完成后1分钟自动销毁
+      backoffLimit: 0 # 禁止 Job 重试
+      template:
+        spec:
+          restartPolicy: Never
+          tolerations:
+          - operator: "Exists"
+            effect: "NoSchedule"
+          - operator: "Exists"
+            effect: "PreferNoSchedule"
+          - operator: "Exists"
+            effect: "NoExecute"
+          containers:
+          - name: gpu-checker
+            image: kang2023/ghx-check:v1.0.0  # 使用我们的GPU检查镜像
+            imagePullPolicy: IfNotPresent
+            command: ["python3"]
+            args: ["/opt/gpu_check_job.py"]
+            env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: DCGM_DIAG_LEVEL
+              value: "1"  # DCGM诊断级别，可通过环境变量覆盖
+            - name: JOB_TYPE
+              value: "cron"
+            resources:
+              requests:
+                nvidia.com/gpu: 8
+                rdma/hca: 1
+              limits:
+                nvidia.com/gpu: 8
+                rdma/hca: 1
+            volumeMounts:
+            - name: shared-results
+              mountPath: /shared
+            - name: localtime
+              mountPath: /etc/localtime
+              readOnly: true
+            - name: gpu-benchmarks-config
+              mountPath: /config/gpu-benchmarks.json
+              subPath: gpu-benchmarks.json
+          volumes:
+          - name: shared-results
+            persistentVolumeClaim:
+              claimName: ghx-pvc
+          - name: localtime
+            hostPath:
+              path: /etc/localtime
+              type: File
+          - name: gpu-benchmarks-config
+            configMap:
+              name: gpu-benchmarks-config
+---
+# GHX统一服务Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghx-server
+  namespace: gpu-health-expert
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ghx-server
+  template:
+    metadata:
+      labels:
+        app: ghx-server
+    spec:
+      tolerations:
+      - operator: "Exists"
+        effect: "NoSchedule"
+      - operator: "Exists"
+        effect: "PreferNoSchedule"
+      - operator: "Exists"
+        effect: "NoExecute"
+      containers:
+      - name: ghx-server
+        image: kang2023/ghx-server:v1.0.0  # GHX统一服务镜像
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: GPU_RESULT_RETENTION_DAYS
+          value: "7"  # GPU结果保留天数，默认为7天
+        - name: PORT
+          value: "5000"
+        - name: KUBECONFIG
+          value: "/root/.kube/config"
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: shared-results
+          mountPath: /shared
+        - name: kubeconfig
+          mountPath: /root/.kube
+          readOnly: true
+        - name: localtime
+          mountPath: /etc/localtime
+          readOnly: true
+      volumes:
+      - name: shared-results
+        persistentVolumeClaim:
+          claimName: ghx-pvc
+      - name: kubeconfig
+        secret:
+          secretName: gpu-health-expert-kubeconfig
+          defaultMode: 0400
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+          type: File
+---
+# GHX统一服务Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghx-service
+  namespace: gpu-health-expert
+spec:
+  selector:
+    app: ghx-service
+  ports:
+  - name: http
+    port: 5000
+    targetPort: 5000
+    nodePort: 31005
+  type: NodePort
+---
+# GHX前端Dashboard Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghx-dashboard
+  namespace: gpu-health-expert
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ghx-dashboard
+  template:
+    metadata:
+      labels:
+        app: ghx-dashboard
+    spec:
+      containers:
+      - name: ghx-dashboard
+        image: kang2023/ghx-dashboard:v1.0.0  # GHX前端Dashboard镜像
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - name: pb-env
+          mountPath: /app/public/env.js
+          subPath: env.js
+        - name: gpu-benchmarks-env
+          mountPath: /app/public/gpu-benchmarks.js
+          subPath: env.js
+        - name: localtime
+          mountPath: /etc/localtime
+          readOnly: true
+      volumes:
+      - name: pb-env
+        configMap:
+          name: pb-env-config
+      - name: gpu-benchmarks-env
+        configMap:
+          name: gpu-benchmarks-config
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+          type: File
+      tolerations:
+      - operator: "Exists"
+        effect: "NoSchedule"
+      - operator: "Exists"
+        effect: "PreferNoSchedule"
+      - operator: "Exists"
+        effect: "NoExecute"
+---
+# GHX前端Dashboard Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghx-dashboard-service
+  namespace: gpu-health-expert
+spec:
+  selector:
+    app: ghx-dashboard
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+    nodePort: 31033
+  type: NodePort

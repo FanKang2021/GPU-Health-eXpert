@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gpu-benchmarks-config
+  namespace: {{ .Values.namespace }}
+data:
+  gpu-benchmarks.json: |
+    {{ toJson .Values.benchmarks.config | nindent 4 }}
+  env.js: |
+    window.GPU_BENCHMARKS = {{ toJson .Values.benchmarks.config }}

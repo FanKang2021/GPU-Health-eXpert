@@ -1,0 +1,13 @@
+apiVersion: v2
+name: gpu-health-expert
+version: 1.0
+description: GHX (GPU Health Expert) Helm Chart
+keywords:
+  - gpu
+  - health
+  - expert
+  - kubernetes
+  - monitoring
+maintainers:
+  - name: fankang 
+    email: fankang@zetyun.com 

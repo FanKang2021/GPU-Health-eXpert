@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pb-env-config
+  namespace: {{ .Values.namespace }}
+data:
+  env.js: |
+    window.NEXT_PUBLIC_API_URL='{{ .Values.pbAddress }}:{{ .Values.ghxServer.nodePort }}';

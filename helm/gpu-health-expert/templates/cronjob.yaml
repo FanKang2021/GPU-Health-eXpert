@@ -1,0 +1,70 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ghx-job
+  namespace: {{ .Values.namespace }}
+spec:
+  schedule: "0 4 * * *"
+  concurrencyPolicy: Allow
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      parallelism: 5
+      completions: 5
+      ttlSecondsAfterFinished: 60
+      backoffLimit: 0
+      template:
+        spec:
+          restartPolicy: Never
+          tolerations:
+            - operator: "Exists"
+              effect: "NoSchedule"
+            - operator: "Exists"
+              effect: "PreferNoSchedule"
+            - operator: "Exists"
+              effect: "NoExecute"
+          containers:
+            - name: gpu-checker
+              image: {{ .Values.cronjob.image }} 
+              imagePullPolicy: IfNotPresent
+              command: ["python3"]
+              args: ["/opt/gpu_check_job.py"]
+              env:
+                - name: NODE_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: spec.nodeName
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: DCGM_DIAG_LEVEL
+                  value: "{{ .Values.cronjob.dcgmDiagLevel }}"
+                - name: JOB_TYPE
+                  value: "cron"
+              resources:
+                requests:
+{{ toYaml .Values.cronjob.resources.requests | indent 18 }}
+                limits:
+{{ toYaml .Values.cronjob.resources.limits | indent 18 }}
+              volumeMounts:
+                - name: shared-results
+                  mountPath: /shared
+                - name: localtime
+                  mountPath: /etc/localtime
+                  readOnly: true
+                - name: gpu-benchmarks-config
+                  mountPath: /config/gpu-benchmarks.json
+                  subPath: gpu-benchmarks.json
+          volumes:
+            - name: shared-results
+              persistentVolumeClaim:
+                claimName: ghx-pvc
+            - name: localtime
+              hostPath:
+                path: /etc/localtime
+                type: File
+            - name: gpu-benchmarks-config
+              configMap:
+                name: gpu-benchmarks-config

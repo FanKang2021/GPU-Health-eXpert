@@ -1,0 +1,44 @@
+# GHX (GPU Health Expert) 统一服务Dockerfile
+# 整合了数据收集和节点状态查询功能
+FROM python:3.9-slim
+
+# 设置工作目录
+WORKDIR /app
+
+# 安装系统依赖，使用清华源
+RUN sed -i 's|http://deb.debian.org|https://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list.d/debian.sources \
+    && sed -i 's|http://snapshot.debian.org|https://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update && apt-get install -y \
+    curl \
+    wget \
+    gnupg2 \
+    lsb-release \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安装kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    && chmod +x kubectl \
+    && mv kubectl /usr/local/bin/
+
+# 安装kubectl-resource-view
+COPY kubectl-resource-view /usr/local/bin/kubectl-resource-view
+RUN chmod +x /usr/local/bin/kubectl-resource-view
+
+# 复制应用代码和依赖文件
+COPY ghx_server.py /app/
+COPY backend_rate_limit.py /app/
+COPY job-template.yaml /app/
+
+# 安装Python依赖（包含频率限制相关依赖）
+RUN pip install Flask Flask-CORS Werkzeug flask-limiter kubernetes
+
+# 创建共享目录和日志目录
+RUN mkdir -p /shared/gpu-inspection-results/cron \
+    && mkdir -p /var/log
+
+# 暴露端口（统一使用5000端口）
+EXPOSE 5000
+
+# 启动命令
+CMD ["python", "ghx_server.py"]

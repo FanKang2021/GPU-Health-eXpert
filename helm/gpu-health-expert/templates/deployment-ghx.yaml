@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghx-server
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ghx-server
+  template:
+    metadata:
+      labels:
+        app: ghx-server
+    spec:
+      containers:
+        - name: ghx-server
+          image: {{ .Values.ghxServer.image }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GPU_RESULT_RETENTION_DAYS
+              value: "{{ .Values.ghxServer.resultRetentionDays }}"
+            - name: PORT
+              value: "{{ .Values.ghxServer.port }}"
+            - name: KUBECONFIG
+              value: "/root/.kube/config"
+          ports:
+            - containerPort: {{ .Values.ghxServer.port }}
+          volumeMounts:
+            - name: shared-results
+              mountPath: /shared
+            - name: kubeconfig
+              mountPath: /root/.kube
+              readOnly: true
+            - name: localtime
+              mountPath: /etc/localtime
+              readOnly: true
+      volumes:
+        - name: shared-results
+          persistentVolumeClaim:
+            claimName: ghx-pvc
+        - name: kubeconfig
+          secret:
+            secretName: gpu-health-expert-kubeconfig
+            defaultMode: 0400
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+            type: File
+      {{- if .Values.ghxServer.tolerations }}
+      tolerations:
+      {{- range .Values.ghxServer.tolerations }}
+      - {{ toYaml . | nindent 10 }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.ghxServer.nodeSelector }}
+      nodeSelector:
+        {{- range $key, $value := .Values.ghxServer.nodeSelector }}
+        {{ $key }}: "{{ $value }}"
+        {{- end }}
+      {{- end }}

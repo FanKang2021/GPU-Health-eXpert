@@ -1,0 +1,116 @@
+# =============================================================================
+# GHX (GPU Health Expert) Helm Chart Values Configuration
+# =============================================================================
+
+# 部署命名空间 - 所有资源将部署到此命名空间
+namespace: gpu-health-expert
+
+# 前端访问地址 - 用于前端环境变量配置
+pbAddress: "http://0.0.0.0"
+
+# =============================================================================
+# GHX统一服务配置 (后端API服务)
+# =============================================================================
+ghxServer:
+  image: kang2023/ghx-server:v1.0.0
+  
+  # 服务端口 - 后端API服务监听的端口
+  port: 5000
+  
+  # NodePort端口 - 通过NodePort方式暴露服务到集群外部
+  nodePort: 31005
+  
+  # 容忍度配置 - 允许Pod调度到有特定污点的节点上
+  tolerations:
+    - operator: "Exists"
+      effect: "NoSchedule"
+    - operator: "Exists"
+      effect: "PreferNoSchedule"
+    - operator: "Exists"
+      effect: "NoExecute"
+  
+  # 节点选择器 - 指定Pod只能调度到带有特定标签的节点
+  nodeSelector:
+    ghx: enable
+  
+  # 结果保留天数 - 诊断结果在数据库中的保留时间
+  resultRetentionDays: 7
+  
+  # PVC存储大小 - 持久化存储的容量
+  pvcStorage: 1Gi
+  
+  # 存储类名称 - 指定使用的存储类
+  storageClassName: share-gcp-hd03-cephfs-hdd
+
+# =============================================================================
+# 前端Dashboard配置
+# =============================================================================
+dashboard:
+  # 前端镜像 - Next.js构建的Web界面
+  image: kang2023/ghx-dashboard:v1.0.0
+  
+  # 服务端口 - 前端服务监听的端口
+  port: 3000
+  
+  # NodePort端口 - 通过NodePort方式暴露前端服务
+  nodePort: 31033
+  
+  # 容忍度配置 - 与后端服务相同的容忍度设置
+  tolerations:
+    - operator: "Exists"
+      effect: "NoSchedule"
+    - operator: "Exists"
+      effect: "PreferNoSchedule"
+    - operator: "Exists"
+      effect: "NoExecute"
+  
+  # 节点选择器 - 与后端服务相同的节点选择
+  nodeSelector:
+    ghx: enable
+
+# =============================================================================
+# GPU基准测试配置
+# =============================================================================
+benchmarks:
+  config:
+    RTX3090: { p2p: 18, nccl: 7, bw: 20 }
+    L40S: { p2p: 28, nccl: 8, bw: 20 }
+    RTX4090: { p2p: 18, nccl: 7, bw: 20 }
+    A100: { p2p: 420, nccl: 70, bw: 20 }
+    A800: { p2p: 340, nccl: 55, bw: 20 }
+    H100: { p2p: 700, nccl: 139, bw: 40 }
+    H800: { p2p: 340, nccl: 65, bw: 47 }
+    H20: { p2p: 700, nccl: 139, bw: 47 }
+    H200: { p2p: 730, nccl: 145, bw: 54 }
+
+# =============================================================================
+# 定时任务配置 (CronJob)
+# =============================================================================
+cronjob:
+  image: kang2023/ghx-check:v1.0.0
+  
+  # DCGM诊断级别 - 0=快速检查, 1=标准检查, 2=深度检查
+  dcgmDiagLevel: "1"
+  
+  # 资源请求和限制配置
+  resources:
+    requests:
+      nvidia.com/gpu-h200: 8         
+      rdma/rdma_shared_device_a: 1
+      rdma/rdma_shared_device_b: 1
+      rdma/rdma_shared_device_c: 1
+      rdma/rdma_shared_device_d: 1
+      rdma/rdma_shared_device_e: 1
+      rdma/rdma_shared_device_f: 1
+      rdma/rdma_shared_device_g: 1
+      rdma/rdma_shared_device_h: 1
+    limits:
+      nvidia.com/gpu-h200: 8 
+      rdma/rdma_shared_device_a: 1
+      rdma/rdma_shared_device_b: 1
+      rdma/rdma_shared_device_c: 1
+      rdma/rdma_shared_device_d: 1
+      rdma/rdma_shared_device_e: 1
+      rdma/rdma_shared_device_f: 1
+      rdma/rdma_shared_device_g: 1
+      rdma/rdma_shared_device_h: 1

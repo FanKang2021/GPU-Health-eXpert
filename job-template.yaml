@@ -1,0 +1,98 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ghx-manual-job-{JOB_ID}
+  namespace: ghx
+  labels:
+    app: ghx-manual
+    job-type: manual
+    job-id: "{BASE_JOB_ID}"
+    created-by: gpu-cli
+spec:
+  parallelism: 1
+  completions: 1
+  ttlSecondsAfterFinished: 120  # Job完成后2分钟自动销毁
+  backoffLimit: 0  # 禁止Job重试
+  template:
+    metadata:
+      labels:
+        app: ghx-manual
+        job-type: manual
+        job-id: "{BASE_JOB_ID}"
+    spec:
+      restartPolicy: Never
+      tolerations:
+      - operator: "Exists"
+        effect: "NoSchedule"
+      - operator: "Exists"
+        effect: "PreferNoSchedule"
+      - operator: "Exists"
+        effect: "NoExecute"
+      nodeSelector:
+        kubernetes.io/hostname: "{NODE_NAME}"  # 直接指定前端选择的节点
+      containers:
+      - name: gpu-checker
+        image: kang2023/ghx-check:v1.0.0
+        imagePullPolicy: IfNotPresent
+        command: ["python3"]
+        args: ["/opt/gpu_check_job.py"]
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: JOB_TYPE
+          value: "manual"
+        - name: JOB_ID
+          value: "{JOB_ID}"
+        - name: ENABLED_TESTS
+          value: "{ENABLED_TESTS}"
+        - name: DCGM_DIAG_LEVEL
+          value: "{DCGM_LEVEL}"
+        - name: SELECTED_NODES
+          value: "{SELECTED_NODES}"
+        resources:
+          requests:
+            {GPU_RESOURCE_NAME}: 8
+            rdma/rdma_shared_device_a: 1
+            rdma/rdma_shared_device_b: 1
+            rdma/rdma_shared_device_c: 1
+            rdma/rdma_shared_device_d: 1
+            rdma/rdma_shared_device_e: 1
+            rdma/rdma_shared_device_f: 1
+            rdma/rdma_shared_device_g: 1
+            rdma/rdma_shared_device_h: 1
+          limits:
+            {GPU_RESOURCE_NAME}: 8
+            rdma/rdma_shared_device_a: 1
+            rdma/rdma_shared_device_b: 1
+            rdma/rdma_shared_device_c: 1
+            rdma/rdma_shared_device_d: 1
+            rdma/rdma_shared_device_e: 1
+            rdma/rdma_shared_device_f: 1
+            rdma/rdma_shared_device_g: 1
+            rdma/rdma_shared_device_h: 1
+        volumeMounts:
+        - name: shared-results
+          mountPath: /shared
+        - name: localtime
+          mountPath: /etc/localtime
+          readOnly: true
+        - name: gpu-benchmarks-config
+          mountPath: /config/gpu-benchmarks.json
+          subPath: gpu-benchmarks.json
+      volumes:
+      - name: shared-results
+        persistentVolumeClaim:
+          claimName: gpu-collector-pvc
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+          type: File
+      - name: gpu-benchmarks-config
+        configMap:
+          name: gpu-benchmarks-config

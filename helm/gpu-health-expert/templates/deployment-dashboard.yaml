@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghx-dashboard
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ghx-dashboard
+  template:
+    metadata:
+      labels:
+        app: ghx-dashboard
+    spec:
+      containers:
+        - name: ghx-dashboard
+          image: {{ .Values.dashboard.image }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .Values.dashboard.port }}
+          volumeMounts:
+            - name: pb-env
+              mountPath: /app/public/env.js
+              subPath: env.js
+            - name: gpu-benchmarks-env
+              mountPath: /app/public/gpu-benchmarks.js
+              subPath: env.js
+            - name: localtime
+              mountPath: /etc/localtime
+              readOnly: true
+      volumes:
+        - name: pb-env
+          configMap:
+            name: pb-env-config
+        - name: gpu-benchmarks-env
+          configMap:
+            name: gpu-benchmarks-config
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+            type: File
+      {{- if .Values.dashboard.tolerations }}
+      tolerations:
+      {{- range .Values.dashboard.tolerations }}
+      - {{ toYaml . | nindent 10 }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.dashboard.nodeSelector }}
+      nodeSelector:
+        {{- range $key, $value := .Values.dashboard.nodeSelector }}
+        {{ $key }}: "{{ $value }}"
+        {{- end }}
+      {{- end }}

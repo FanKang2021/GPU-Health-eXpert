@@ -475,6 +475,28 @@ We welcome all forms of contributions!
 - Provide detailed reproduction steps
 - Include system environment information
 
+## 🙏 Special Thanks
+
+This project is built upon the following excellent open source projects:
+
+### Core Dependencies
+
+- **[kubectl-resource-view](https://github.com/bryant-rh/kubectl-resource-view)** - Kubernetes resource usage viewing tool
+  - Our Fork version: [kubectl-resource-view](https://github.com/FanKang2021/kubectl-resource-view) - Modified to support non-standard GPU resource labels
+
+- **[nccl-tests](https://github.com/coreweave/nccl-tests)** - NCCL performance testing toolkit
+  - Used for GPU inter-communication performance benchmarking
+
+- **[gpu-burn](https://github.com/wilicc/gpu-burn)** - GPU stress testing tool
+  - Used for GPU load testing and stability verification
+
+- **[cuda-samples](https://github.com/NVIDIA/cuda-samples)** - NVIDIA CUDA sample code
+  - Provides reference implementations for GPU programming and performance testing
+
+### Acknowledgments
+
+We thank the maintainers and contributors of these open source projects, whose work provides a solid foundation for the GHX project. We are committed to giving back to and contributing to the open source community, making GPU cluster management simpler and smarter.
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

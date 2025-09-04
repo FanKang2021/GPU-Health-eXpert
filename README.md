@@ -476,6 +476,28 @@ kubectl exec -it deployment/ghx-server -n gpu-health-expert -- /bin/bash
 - 提供详细的复现步骤
 - 包含系统环境信息
 
+## 🙏 特别鸣谢
+
+本项目基于以下优秀的开源项目构建，特此感谢：
+
+### 核心依赖项目
+
+- **[kubectl-resource-view](https://github.com/bryant-rh/kubectl-resource-view)** - Kubernetes资源使用情况查看工具
+  - 我们的Fork版本：[kubectl-resource-view](https://github.com/FanKang2021/kubectl-resource-view) - 修改支持了非标准GPU资源标签
+
+- **[nccl-tests](https://github.com/coreweave/nccl-tests)** - NCCL性能测试工具集
+  - 用于GPU间通信性能基准测试
+
+- **[gpu-burn](https://github.com/wilicc/gpu-burn)** - GPU压力测试工具
+  - 用于GPU负载测试和稳定性验证
+
+- **[cuda-samples](https://github.com/NVIDIA/cuda-samples)** - NVIDIA CUDA示例代码
+  - 提供了GPU编程和性能测试的参考实现
+
+### 致谢
+
+感谢这些开源项目的维护者和贡献者，他们的工作为GHX项目提供了坚实的基础。我们致力于在开源社区中回馈和贡献，让GPU集群管理变得更加简单和智能。
+
 ## 📄 许可证
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。

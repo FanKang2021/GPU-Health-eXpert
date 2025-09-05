@@ -264,12 +264,22 @@ curl http://your-server:31005/api/gpu-inspection/rdma-resource-info
 ### 使用YAML部署
 
 ```bash
-# 部署所有组件
+# 1. 部署所有组件
 kubectl apply -f ghx.yaml
 
-# 验证部署
+# 2.验证部署
 kubectl get all -n gpu-health-expert
 ```
+
+**重要说明**：
+- **Job模板管理**：Job模板现在通过ConfigMap管理，挂载到 `/app/job-template.yaml`。这样可以：
+  - 集中管理Job模板配置
+  - 支持动态更新模板而无需重新构建镜像
+  - 便于版本控制和环境隔离
+- **目录自动初始化**：`ghx-server` 启动时会自动创建必要的共享目录：
+  - `/shared/gpu-inspection-results/cron` - 定时任务结果目录
+  - `/shared/gpu-inspection-results/manual` - 手动任务结果目录
+- **智能资源处理**：当无法获取 RDMA 资源时，系统会自动删除 Job 模板中的 RDMA 资源配置行，避免无效的资源请求
 
 ### 配置说明
 
@@ -281,7 +291,7 @@ namespace: gpu-health-expert
 
 # 后端服务配置
 ghxServer:
-  image: kang2023/ghx-server:v1.0.0
+  image: kang2023/ghx-server:latest
   port: 5000
   nodePort: 31005
   tolerations:
@@ -292,7 +302,7 @@ ghxServer:
 
 # 前端配置
 dashboard:
-  image: kang2023/ghx-dashboard:v1.0.0
+  image: kang2023/ghx-dashboard:latest
   port: 3000
   nodePort: 31033
 
@@ -432,7 +442,7 @@ kubectl exec -it deployment/ghx-server -n gpu-health-expert -- /bin/bash
 
 ## 📈 更新日志
 
-### v1.0.0 (2025-09-03) - 初始版本
+### latest (2025-09-03) - 初始版本
 
 #### 🎉 架构重构
 - **统一服务**: 合并`gpu_collector_service`和`gpu_cli`为`ghx_server`

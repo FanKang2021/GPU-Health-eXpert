@@ -2968,7 +2968,18 @@ def create_gpu_inspection_job():
             node_job_yaml = node_job_yaml.replace('{DCGM_LEVEL}', str(dcgm_level))
             node_job_yaml = node_job_yaml.replace('{SELECTED_NODES}', selected_nodes_str)
             node_job_yaml = node_job_yaml.replace('{GPU_RESOURCE_NAME}', gpu_resource_name)
-            node_job_yaml = node_job_yaml.replace('{RDMA_RESOURCES}', rdma_resources)
+            
+            # 处理RDMA资源：如果为空则删除整行，否则替换变量
+            if rdma_resources.strip():
+                node_job_yaml = node_job_yaml.replace('{RDMA_RESOURCES}', rdma_resources)
+            else:
+                # 删除包含 {RDMA_RESOURCES} 的整行
+                lines = node_job_yaml.split('\n')
+                filtered_lines = []
+                for line in lines:
+                    if '{RDMA_RESOURCES}' not in line:
+                        filtered_lines.append(line)
+                node_job_yaml = '\n'.join(filtered_lines)
             
             # 替换基础Job ID标签，所有Job使用相同的基础job_id
             node_job_yaml = node_job_yaml.replace('{BASE_JOB_ID}', job_id)
@@ -4375,13 +4386,13 @@ def get_rdma_resources(node_name=None):
                 logger.info(f"发现 {len(rdma_resources)} 个RDMA设备，去重后 {len(unique_resources)} 个")
                 return '\n'.join(normalized_resources)
         
-        # 如果kubectl-resource-view失败，返回默认RDMA资源
-        logger.warning("无法获取RDMA资源信息，使用默认配置")
-        return "rdma/hca: 8"
+        # 如果kubectl-resource-view失败，返回空字符串（删除模板中的变量）
+        logger.warning("无法获取RDMA资源信息，将删除模板中的RDMA资源配置")
+        return ""
         
     except Exception as e:
         logger.error(f"获取RDMA资源失败: {e}")
-        return "rdma/hca: 8"
+        return ""
 
 
 def cleanup_expired_data():
@@ -4439,9 +4450,34 @@ def background_collection():
             logger.error(f"后台数据收集失败: {e}")
             time.sleep(60)  # 失败后1分钟重试
 
+def init_shared_directories():
+    """初始化共享目录"""
+    try:
+        # 创建必要的目录
+        directories = [
+            '/shared/gpu-inspection-results',
+            '/shared/gpu-inspection-results/cron',
+            '/shared/gpu-inspection-results/manual'
+        ]
+        
+        for directory in directories:
+            if not os.path.exists(directory):
+                os.makedirs(directory, exist_ok=True)
+                logger.info(f"创建目录: {directory}")
+            else:
+                logger.debug(f"目录已存在: {directory}")
+        
+        logger.info("共享目录初始化完成")
+        
+    except Exception as e:
+        logger.error(f"初始化共享目录失败: {e}")
+
 if __name__ == '__main__':
     # 初始化数据库
     init_db()
+    
+    # 初始化共享目录
+    init_shared_directories()
     
     # 启动后台收集任务
     collection_thread = threading.Thread(target=background_collection, daemon=True)

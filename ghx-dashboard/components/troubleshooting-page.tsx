@@ -31,116 +31,9 @@ const defaultGpuBenchmarks = {
   H200: { p2p: 730, nccl: 145, bw: 54 },
 }
 
-// 性能单元格组件 - 与node-details-table保持一致
-const PerformanceCell = ({
-  value,
-  gpuType,
-  testType,
-  theme,
-  t,
-}: {
-  value: string
-  gpuType: string
-  testType: "bw" | "p2p" | "nccl"
-  theme: "light" | "dark"
-  t: any
-}) => {
-  // 解析数值（去除单位）
-  const parseValue = (valueStr: string | null | undefined): number => {
-    if (!valueStr || typeof valueStr !== 'string') {
-      return 0
-    }
-    return Number.parseFloat(valueStr.replace(/[^\d.]/g, "")) || 0
-  }
-
-  const benchmark = defaultGpuBenchmarks[gpuType as keyof typeof defaultGpuBenchmarks]
-  if (!benchmark) return <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{value}</span>
-
-  // 处理N/A值
-  if (!value || value === 'N/A' || value === 'Unknown') {
-    return (
-      <div className="flex items-center space-x-2">
-        <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{value}</span>
-        <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
-          (基准值: {benchmark[testType]} GB/s)
-        </span>
-        <Badge variant="secondary" className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-          <Minus className="w-3 h-3 mr-1" />
-          N/A
-        </Badge>
-      </div>
-    )
-  }
-
-  const numericValue = parseValue(value)
-  const benchmarkValue = benchmark[testType]
-  const isPass = numericValue >= benchmarkValue
-
-  return (
-    <div className="flex items-center space-x-2">
-      <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{value}</span>
-      <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
-        (基准值: {benchmarkValue} GB/s)
-      </span>
-      {isPass ? <CheckCircle className="w-4 h-4 text-green-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
-    </div>
-  )
-}
 
 
 
-// 节点状态判断函数 - 根据所有测试结果判断节点是否通过
-const getNodeStatus = (result: any): string => {
-  if (!result) return 'Unknown'
-  
-  // 检查DCGM和IB状态
-  const dcgmStatus = result.dcgmDiag
-  const ibStatus = result.ibCheck
-  
-  // 如果DCGM或IB不是Pass，则整体未通过
-  if (dcgmStatus !== 'Pass' && dcgmStatus !== 'Skipped' && dcgmStatus !== 'N/A') {
-    return 'No Pass'
-  }
-  if (ibStatus !== 'Pass' && ibStatus !== 'Skipped' && ibStatus !== 'N/A') {
-    return 'No Pass'
-  }
-  
-  // 检查性能测试结果
-  const gpuType = result.gpuType
-  const benchmark = defaultGpuBenchmarks[gpuType as keyof typeof defaultGpuBenchmarks]
-  
-  if (!benchmark) return 'Unknown'
-  
-  // 检查带宽测试 - 只检查有数值的测试
-  const bandwidthTest = result.bandwidthTest
-  if (bandwidthTest && bandwidthTest !== 'N/A' && bandwidthTest !== 'Unknown') {
-    const bandwidthValue = parseFloat(bandwidthTest.replace(' GB/s', ''))
-    if (isNaN(bandwidthValue) || bandwidthValue < benchmark.bw) {
-      return 'No Pass'
-    }
-  }
-  
-  // 检查P2P测试 - 只检查有数值的测试
-  const p2pTest = result.p2pBandwidthLatencyTest
-  if (p2pTest && p2pTest !== 'N/A' && p2pTest !== 'Unknown') {
-    const p2pValue = parseFloat(p2pTest.replace(' GB/s', ''))
-    if (isNaN(p2pValue) || p2pValue < benchmark.p2p) {
-      return 'No Pass'
-    }
-  }
-  
-  // 检查NCCL测试 - 只检查有数值的测试
-  const ncclTest = result.ncclTests
-  if (ncclTest && ncclTest !== 'N/A' && ncclTest !== 'Unknown') {
-    const ncclValue = parseFloat(ncclTest.replace(' GB/s', ''))
-    if (isNaN(ncclValue) || ncclValue < benchmark.nccl) {
-      return 'No Pass'
-    }
-  }
-  
-  // 所有检查的测试都通过
-  return 'Pass'
-}
 
 // 检查项目配置
 const checkItems = {
@@ -320,6 +213,144 @@ export default function TroubleshootingPage({ theme, language, t }: Troubleshoot
     }
     return defaultGpuBenchmarks
   })
+  
+  // 监听 GPU_BENCHMARKS 变化
+  useEffect(() => {
+    let lastBenchmarks: any = null
+    
+    const checkGpuBenchmarks = () => {
+      if (typeof window !== "undefined" && (window as any).GPU_BENCHMARKS) {
+        const currentBenchmarks = (window as any).GPU_BENCHMARKS
+        // 只在值真正变化时才输出日志
+        if (JSON.stringify(currentBenchmarks) !== JSON.stringify(lastBenchmarks)) {
+          console.log('✅ 从 ConfigMap 读取到 GPU_BENCHMARKS:', currentBenchmarks)
+          lastBenchmarks = currentBenchmarks
+        }
+        setGpuBenchmarks(currentBenchmarks)
+      } else if (lastBenchmarks !== null) {
+        // 只在从有值变为无值时输出一次日志
+        console.log('❌ GPU_BENCHMARKS 未加载，使用默认值')
+        lastBenchmarks = null
+      }
+    }
+    
+    // 立即检查一次
+    checkGpuBenchmarks()
+    
+    // 降低检查频率到每5秒一次
+    const interval = setInterval(checkGpuBenchmarks, 5000)
+    
+    return () => clearInterval(interval)
+  }, [])
+  
+  // 性能单元格组件 - 与node-details-table保持一致
+  const PerformanceCell = ({
+    value,
+    gpuType,
+    testType,
+    theme,
+    t,
+  }: {
+    value: string
+    gpuType: string
+    testType: "bw" | "p2p" | "nccl"
+    theme: "light" | "dark"
+    t: any
+  }) => {
+    // 解析数值（去除单位）
+    const parseValue = (valueStr: string | null | undefined): number => {
+      if (!valueStr || typeof valueStr !== 'string') {
+        return 0
+      }
+      return Number.parseFloat(valueStr.replace(/[^\d.]/g, "")) || 0
+    }
+
+    const benchmark = gpuBenchmarks[gpuType as keyof typeof gpuBenchmarks]
+    if (!benchmark) return <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{value}</span>
+
+    // 处理N/A值
+    if (!value || value === 'N/A' || value === 'Unknown') {
+      return (
+        <div className="flex items-center space-x-2">
+          <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{value}</span>
+          <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+            (基准值: {benchmark[testType]} GB/s)
+          </span>
+          <Badge variant="secondary" className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+            <Minus className="w-3 h-3 mr-1" />
+            N/A
+          </Badge>
+        </div>
+      )
+    }
+
+    const numericValue = parseValue(value)
+    const benchmarkValue = benchmark[testType]
+    const isPass = numericValue >= benchmarkValue
+
+    return (
+      <div className="flex items-center space-x-2">
+        <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{value}</span>
+        <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+          (基准值: {benchmarkValue} GB/s)
+        </span>
+        {isPass ? <CheckCircle className="w-4 h-4 text-green-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
+      </div>
+    )
+  }
+
+  // 节点状态判断函数 - 根据所有测试结果判断节点是否通过
+  const getNodeStatus = (result: any): string => {
+    if (!result) return 'Unknown'
+    
+    // 检查DCGM和IB状态
+    const dcgmStatus = result.dcgmDiag
+    const ibStatus = result.ibCheck
+    
+    // 如果DCGM或IB不是Pass，则整体未通过
+    if (dcgmStatus !== 'Pass' && dcgmStatus !== 'Skipped' && dcgmStatus !== 'N/A') {
+      return 'No Pass'
+    }
+    if (ibStatus !== 'Pass' && ibStatus !== 'Skipped' && ibStatus !== 'N/A') {
+      return 'No Pass'
+    }
+    
+    // 检查性能测试结果
+    const gpuType = result.gpuType
+    const benchmark = gpuBenchmarks[gpuType as keyof typeof gpuBenchmarks]
+    
+    if (!benchmark) return 'Unknown'
+    
+    // 检查带宽测试 - 只检查有数值的测试
+    const bandwidthTest = result.bandwidthTest
+    if (bandwidthTest && bandwidthTest !== 'N/A' && bandwidthTest !== 'Unknown') {
+      const bandwidthValue = parseFloat(bandwidthTest.replace(' GB/s', ''))
+      if (isNaN(bandwidthValue) || bandwidthValue < benchmark.bw) {
+        return 'No Pass'
+      }
+    }
+    
+    // 检查P2P测试 - 只检查有数值的测试
+    const p2pTest = result.p2pBandwidthLatencyTest
+    if (p2pTest && p2pTest !== 'N/A' && p2pTest !== 'Unknown') {
+      const p2pValue = parseFloat(p2pTest.replace(' GB/s', ''))
+      if (isNaN(p2pValue) || p2pValue < benchmark.p2p) {
+        return 'No Pass'
+      }
+    }
+    
+    // 检查NCCL测试 - 只检查有数值的测试
+    const ncclTest = result.ncclTests
+    if (ncclTest && ncclTest !== 'N/A' && ncclTest !== 'Unknown') {
+      const ncclValue = parseFloat(ncclTest.replace(' GB/s', ''))
+      if (isNaN(ncclValue) || ncclValue < benchmark.nccl) {
+        return 'No Pass'
+      }
+    }
+    
+    // 所有检查的测试都通过
+    return 'Pass'
+  }
   
   // ==================== 优化后的刷新函数 ====================
   

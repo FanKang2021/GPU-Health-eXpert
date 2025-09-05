@@ -7,7 +7,7 @@ data:
   gpu-benchmarks.json: |
     {
       "RTX 3090": {"p2p": 18, "nccl": 7, "bw": 20},
-      "L40S": {"p2p": 28, "nccl": 9, "bw": 20},
+      "L40S": {"p2p": 28, "nccl": 8, "bw": 20},
       "RTX 4090": {"p2p": 18, "nccl": 7, "bw": 20},
       "A100": {"p2p": 420, "nccl": 70, "bw": 20},
       "A800": {"p2p": 340, "nccl": 55, "bw": 20},
@@ -19,7 +19,7 @@ data:
   env.js: |
     window.GPU_BENCHMARKS = {
       "RTX 3090": { p2p: 18, nccl: 7, bw: 20 },
-      L40S: { p2p: 28, nccl: 9, bw: 20 },
+      L40S: { p2p: 28, nccl: 8, bw: 20 },
       "RTX 4090": { p2p: 18, nccl: 7, bw: 20 },
       A100: { p2p: 420, nccl: 70, bw: 20 },
       A800: { p2p: 340, nccl: 55, bw: 20 },

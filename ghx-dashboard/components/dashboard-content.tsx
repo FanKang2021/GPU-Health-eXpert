@@ -256,6 +256,35 @@ export function DashboardContent({ theme, language, t }: DashboardContentProps) 
     }
     return defaultGpuBenchmarks
   })
+  
+  // 监听 GPU_BENCHMARKS 变化
+  useEffect(() => {
+    let lastBenchmarks: any = null
+    
+    const checkGpuBenchmarks = () => {
+      if (typeof window !== "undefined" && (window as any).GPU_BENCHMARKS) {
+        const currentBenchmarks = (window as any).GPU_BENCHMARKS
+        // 只在值真正变化时才输出日志
+        if (JSON.stringify(currentBenchmarks) !== JSON.stringify(lastBenchmarks)) {
+          console.log('✅ 从 ConfigMap 读取到 GPU_BENCHMARKS:', currentBenchmarks)
+          lastBenchmarks = currentBenchmarks
+        }
+        setGpuBenchmarks(currentBenchmarks)
+      } else if (lastBenchmarks !== null) {
+        // 只在从有值变为无值时输出一次日志
+        console.log('❌ GPU_BENCHMARKS 未加载，使用默认值')
+        lastBenchmarks = null
+      }
+    }
+    
+    // 立即检查一次
+    checkGpuBenchmarks()
+    
+    // 降低检查频率到每5秒一次
+    const interval = setInterval(checkGpuBenchmarks, 5000)
+    
+    return () => clearInterval(interval)
+  }, [])
 
   const [usedGpuTypes, setUsedGpuTypes] = useState<string[]>([])
 

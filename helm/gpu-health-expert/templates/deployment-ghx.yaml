@@ -38,6 +38,10 @@ spec:
             - name: localtime
               mountPath: /etc/localtime
               readOnly: true
+            - name: job-template-config
+              mountPath: /app/job-template.yaml
+              subPath: job-template.yaml
+              readOnly: true
       volumes:
         - name: shared-results
           persistentVolumeClaim:
@@ -50,6 +54,9 @@ spec:
           hostPath:
             path: /etc/localtime
             type: File
+        - name: job-template-config
+          configMap:
+            name: job-template-config
       {{- if .Values.ghxServer.tolerations }}
       tolerations:
       {{- range .Values.ghxServer.tolerations }}

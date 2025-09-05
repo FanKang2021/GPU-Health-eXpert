@@ -28,7 +28,7 @@ RUN chmod +x /usr/local/bin/kubectl-resource-view
 # 复制应用代码和依赖文件
 COPY ghx_server.py /app/
 COPY backend_rate_limit.py /app/
-COPY job-template.yaml /app/
+# COPY job-template.yaml /app/  #已通过configmap传递
 
 # 安装Python依赖（包含频率限制相关依赖）
 RUN pip install Flask Flask-CORS Werkzeug flask-limiter kubernetes

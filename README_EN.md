@@ -264,12 +264,22 @@ curl http://your-server:31005/api/gpu-inspection/rdma-resource-info
 ### Deploy with YAML
 
 ```bash
-# Deploy all components
+# 1. Deploy all components
 kubectl apply -f ghx.yaml
 
-# Verify deployment
+# 2。Verify deployment
 kubectl get all -n gpu-health-expert
 ```
+
+**Important Notes**:
+- **Job Template Management**: Job templates are now managed through ConfigMap and mounted to `/app/job-template.yaml`. This provides:
+  - Centralized management of Job template configuration
+  - Support for dynamic template updates without rebuilding images
+  - Better version control and environment isolation
+- **Directory Auto-initialization**: `ghx-server` automatically creates necessary shared directories on startup:
+  - `/shared/gpu-inspection-results/cron` - Cron job results directory
+  - `/shared/gpu-inspection-results/manual` - Manual job results directory
+- **Smart Resource Handling**: When RDMA resources cannot be obtained, the system automatically removes RDMA resource configuration lines from the Job template to avoid invalid resource requests
 
 ### Configuration
 
@@ -281,7 +291,7 @@ namespace: gpu-health-expert
 
 # Backend service configuration
 ghxServer:
-  image: kang2023/ghx-server:v1.0.0
+  image: kang2023/ghx-server:latest
   port: 5000
   nodePort: 31005
   tolerations:
@@ -292,7 +302,7 @@ ghxServer:
 
 # Frontend configuration
 dashboard:
-  image: kang2023/ghx-dashboard:v1.0.0
+  image: kang2023/ghx-dashboard:latest
   port: 3000
   nodePort: 31033
 
@@ -432,7 +442,7 @@ kubectl exec -it deployment/ghx-server -n gpu-health-expert -- /bin/bash
 
 ## 📈 Changelog
 
-### v1.0.0 (2025-09-03) - Initial Release
+### latest (2025-09-03) - Initial Release
 
 #### 🎉 Architecture Refactoring
 - **Unified Service**: Merged `gpu_collector_service` and `gpu_cli` into `ghx_server`

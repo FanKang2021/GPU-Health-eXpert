@@ -6,7 +6,7 @@
 namespace: gpu-health-expert
 
 # 前端访问地址 - 用于前端环境变量配置
-pbAddress: "http://0.0.0.0"
+pbAddress: "http://<your-server-ip>"
 
 # =============================================================================
 # GHX统一服务配置 (后端API服务)
@@ -40,7 +40,7 @@ ghxServer:
   pvcStorage: 1Gi
   
   # 存储类名称 - 指定使用的存储类
-  storageClassName: share-gcp-hd03-cephfs-hdd
+  storageClassName: <your-storage-class-name>
   
   # CORS配置
   cors:

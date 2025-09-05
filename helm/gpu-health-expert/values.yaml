@@ -12,7 +12,7 @@ pbAddress: "http://0.0.0.0"
 # GHX统一服务配置 (后端API服务)
 # =============================================================================
 ghxServer:
-  image: kang2023/ghx-server:v1.0.0
+  image: kang2023/ghx-server:latest
   
   # 服务端口 - 后端API服务监听的端口
   port: 5000
@@ -41,13 +41,19 @@ ghxServer:
   
   # 存储类名称 - 指定使用的存储类
   storageClassName: share-gcp-hd03-cephfs-hdd
+  
+  # CORS配置
+  cors:
+    # 允许的源地址，多个地址用逗号分隔
+    # 默认已包含localhost和127.0.0.1地址，只需添加额外的服务地址
+    origins: "http://<your-server-ip>:31033"
 
 # =============================================================================
 # 前端Dashboard配置
 # =============================================================================
 dashboard:
   # 前端镜像 - Next.js构建的Web界面
-  image: kang2023/ghx-dashboard:v1.0.0
+  image: kang2023/ghx-dashboard:latest
   
   # 服务端口 - 前端服务监听的端口
   port: 3000
@@ -87,7 +93,7 @@ benchmarks:
 # 定时任务配置 (CronJob)
 # =============================================================================
 cronjob:
-  image: kang2023/ghx-check:v1.0.0
+  image: kang2023/ghx-check:latest
   
   # DCGM诊断级别 - 0=快速检查, 1=标准检查, 2=深度检查
   dcgmDiagLevel: "1"
@@ -95,22 +101,8 @@ cronjob:
   # 资源请求和限制配置
   resources:
     requests:
-      nvidia.com/gpu-h200: 8         
-      rdma/rdma_shared_device_a: 1
-      rdma/rdma_shared_device_b: 1
-      rdma/rdma_shared_device_c: 1
-      rdma/rdma_shared_device_d: 1
-      rdma/rdma_shared_device_e: 1
-      rdma/rdma_shared_device_f: 1
-      rdma/rdma_shared_device_g: 1
-      rdma/rdma_shared_device_h: 1
+      nvidia.com/gpu: 8         
+      rdma/hca: 1
     limits:
-      nvidia.com/gpu-h200: 8 
-      rdma/rdma_shared_device_a: 1
-      rdma/rdma_shared_device_b: 1
-      rdma/rdma_shared_device_c: 1
-      rdma/rdma_shared_device_d: 1
-      rdma/rdma_shared_device_e: 1
-      rdma/rdma_shared_device_f: 1
-      rdma/rdma_shared_device_g: 1
-      rdma/rdma_shared_device_h: 1
+      nvidia.com/gpu: 8 
+      rdma/hca: 1

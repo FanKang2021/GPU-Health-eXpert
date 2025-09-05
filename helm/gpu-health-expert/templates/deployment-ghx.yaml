@@ -24,6 +24,9 @@ spec:
               value: "{{ .Values.ghxServer.port }}"
             - name: KUBECONFIG
               value: "/root/.kube/config"
+            # CORS配置环境变量
+            - name: CORS_ORIGINS
+              value: "{{ .Values.ghxServer.cors.origins }}"
           ports:
             - containerPort: {{ .Values.ghxServer.port }}
           volumeMounts:

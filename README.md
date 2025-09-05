@@ -235,6 +235,32 @@ helm upgrade ghx ./helm/gpu-health-expert -n gpu-health-expert
 helm uninstall ghx -n gpu-health-expert
 ```
 
+### CORS配置
+
+项目支持简化的CORS配置，只需要配置 `CORS_ORIGINS` 环境变量：
+
+```bash
+# 环境变量配置（多个地址用逗号分隔）
+# 默认已包含localhost地址，只需添加额外地址
+export CORS_ORIGINS="http://your-domain.com:31033,http://your-server-ip:31033"
+```
+
+**注意**：如果不设置环境变量，系统将使用默认的开发环境地址。
+
+
+### 动态资源配置
+
+项目支持动态获取GPU和RDMA资源信息，通过 `kubectl-resource-view` 工具自动检测集群中的实际资源：
+
+```bash
+# 获取GPU资源信息
+curl http://your-server:31005/api/gpu-inspection/gpu-resource-info
+
+# 获取RDMA资源信息
+curl http://your-server:31005/api/gpu-inspection/rdma-resource-info
+```
+
+
 ### 使用YAML部署
 
 ```bash

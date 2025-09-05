@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: ghx-manual-job-{JOB_ID}
-  namespace: ghx
+  namespace: gpu-health-expert 
   labels:
     app: ghx-manual
     job-type: manual
@@ -11,7 +11,7 @@ metadata:
 spec:
   parallelism: 1
   completions: 1
-  ttlSecondsAfterFinished: 120  # Job完成后2分钟自动销毁
+  ttlSecondsAfterFinished: 60  # Job完成后1分钟自动销毁
   backoffLimit: 0  # 禁止Job重试
   template:
     metadata:
@@ -32,7 +32,7 @@ spec:
         kubernetes.io/hostname: "{NODE_NAME}"  # 直接指定前端选择的节点
       containers:
       - name: gpu-checker
-        image: kang2023/ghx-check:v1.0.0
+        image: kang2023/ghx-check:latest
         imagePullPolicy: IfNotPresent
         command: ["python3"]
         args: ["/opt/gpu_check_job.py"]
@@ -58,24 +58,10 @@ spec:
         resources:
           requests:
             {GPU_RESOURCE_NAME}: 8
-            rdma/rdma_shared_device_a: 1
-            rdma/rdma_shared_device_b: 1
-            rdma/rdma_shared_device_c: 1
-            rdma/rdma_shared_device_d: 1
-            rdma/rdma_shared_device_e: 1
-            rdma/rdma_shared_device_f: 1
-            rdma/rdma_shared_device_g: 1
-            rdma/rdma_shared_device_h: 1
+            {RDMA_RESOURCES}
           limits:
             {GPU_RESOURCE_NAME}: 8
-            rdma/rdma_shared_device_a: 1
-            rdma/rdma_shared_device_b: 1
-            rdma/rdma_shared_device_c: 1
-            rdma/rdma_shared_device_d: 1
-            rdma/rdma_shared_device_e: 1
-            rdma/rdma_shared_device_f: 1
-            rdma/rdma_shared_device_g: 1
-            rdma/rdma_shared_device_h: 1
+            {RDMA_RESOURCES}
         volumeMounts:
         - name: shared-results
           mountPath: /shared
@@ -88,7 +74,7 @@ spec:
       volumes:
       - name: shared-results
         persistentVolumeClaim:
-          claimName: gpu-collector-pvc
+          claimName: ghx-pvc
       - name: localtime
         hostPath:
           path: /etc/localtime

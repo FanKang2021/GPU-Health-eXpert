@@ -82,8 +82,36 @@ except ImportError:
 
 # 创建Flask应用
 app = Flask(__name__)
+
+# ==================== CORS配置 ====================
+
+def get_cors_origins():
+    """获取CORS允许的源地址"""
+    # 默认的CORS地址（开发环境常用地址）
+    origins = [
+        "http://localhost:3000",
+        "http://localhost:31033",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:31033"
+    ]
+    
+    # 从环境变量获取CORS_ORIGINS，支持多个地址用逗号分隔
+    cors_origins_env = os.getenv('CORS_ORIGINS', '')
+    
+    if cors_origins_env:
+        # 如果设置了环境变量，在默认地址基础上添加环境变量中的地址
+        additional_origins = [origin.strip() for origin in cors_origins_env.split(',') if origin.strip()]
+        origins.extend(additional_origins)
+    
+    # 去重并过滤空值
+    origins = list(set([origin for origin in origins if origin]))
+    
+    logger.info(f"CORS允许的源地址: {origins}")
+    return origins
+
+# 配置CORS
 CORS(app, 
-     origins=["http://10.201.48.202:31033", "http://localhost:3000", "http://localhost:31033"],
+     origins=get_cors_origins(),
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
      supports_credentials=True)
@@ -2931,11 +2959,16 @@ def create_gpu_inspection_job():
             node_job_name = f"ghx-manual-job-{job_id}-{node_name}"
             node_job_yaml = node_job_yaml.replace('ghx-manual-job-{JOB_ID}', node_job_name)
             
+            # 获取动态资源信息
+            gpu_resource_name = get_gpu_resource_name(node_name)
+            rdma_resources = get_rdma_resources(node_name)
+            
             # 然后替换其他模板变量
             node_job_yaml = node_job_yaml.replace('{ENABLED_TESTS}', enabled_tests_str)
             node_job_yaml = node_job_yaml.replace('{DCGM_LEVEL}', str(dcgm_level))
             node_job_yaml = node_job_yaml.replace('{SELECTED_NODES}', selected_nodes_str)
-            node_job_yaml = node_job_yaml.replace('{GPU_RESOURCE_NAME}', 'nvidia.com/gpu-h200')
+            node_job_yaml = node_job_yaml.replace('{GPU_RESOURCE_NAME}', gpu_resource_name)
+            node_job_yaml = node_job_yaml.replace('{RDMA_RESOURCES}', rdma_resources)
             
             # 替换基础Job ID标签，所有Job使用相同的基础job_id
             node_job_yaml = node_job_yaml.replace('{BASE_JOB_ID}', job_id)
@@ -4195,13 +4228,33 @@ def get_gpu_resource_info():
             "error": f"获取GPU资源信息失败: {str(e)}"
         }), 500
 
-def get_gpu_resource_name():
+@app.route('/api/gpu-inspection/rdma-resource-info', methods=['GET'])
+def get_rdma_resource_info():
+    """获取RDMA资源信息"""
+    try:
+        rdma_resources = get_rdma_resources()
+        return jsonify({
+            "success": True,
+            "rdmaResources": rdma_resources,
+            "timestamp": time.time()
+        })
+    except Exception as e:
+        logger.error(f"获取RDMA资源信息失败: {e}")
+        return jsonify({
+            "error": f"获取RDMA资源信息失败: {str(e)}"
+        }), 500
+
+def get_gpu_resource_name(node_name=None):
     """自动检测GPU资源名称"""
     try:
+        # 如果指定了节点名，只查询该节点
+        if node_name:
+            cmd = ['kubectl-resource-view', 'node', node_name, '-t', 'gpu', '--no-format']
+        else:
+            cmd = ['kubectl-resource-view', 'node', '-t', 'gpu']
+        
         # 使用kubectl-resource-view获取GPU信息 - 增加超时时间到2分钟
-        result = subprocess.run([
-            'kubectl-resource-view', 'node', '-t', 'gpu'
-        ], capture_output=True, text=True, timeout=120)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
         
         if result.returncode == 0:
             lines = result.stdout.strip().split('\n')
@@ -4243,8 +4296,93 @@ def get_gpu_resource_name():
         return 'nvidia.com/gpu'
         
     except Exception as e:
-        logger.warning(f"检测GPU资源名称失败: {e}")
+        logger.warning(f"获取GPU资源名称失败: {e}")
         return 'nvidia.com/gpu'
+
+def get_rdma_resources(node_name=None):
+    """获取RDMA资源信息"""
+    try:
+        # 如果指定了节点名，只查询该节点
+        if node_name:
+            cmd = ['kubectl-resource-view', 'node', node_name, '-t', 'gpu', '--no-format']
+        else:
+            cmd = ['kubectl-resource-view', 'node', '-t', 'gpu']
+        
+        # 使用kubectl-resource-view获取RDMA信息
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        
+        if result.returncode == 0:
+            lines = result.stdout.strip().split('\n')
+            rdma_resources = []
+            
+            if node_name:
+                # 单个节点模式：跳过表头，直接解析数据行
+                data_lines = lines[1:] if len(lines) > 1 else []
+            else:
+                # 多节点模式：跳过表头
+                data_lines = lines[1:] if len(lines) > 1 else []
+            
+            for line in data_lines:
+                # 查找包含rdma/的行
+                if 'rdma/' in line:
+                    # 使用正则表达式提取rdma设备信息
+                    import re
+                    # 匹配所有 rdma/ 开头的设备: Y 格式
+                    rdma_pattern = r'rdma/[^:\s]+:\s*(\d+)'
+                    matches = re.findall(rdma_pattern, line)
+                    
+                    if matches:
+                        # 重新匹配完整的设备信息
+                        full_pattern = r'rdma/[^:\s]+:\s*\d+'
+                        full_matches = re.findall(full_pattern, line)
+                        
+                        for match in full_matches:
+                            # 提取设备名称和数量
+                            device_name, count = match.split(':')
+                            device_name = device_name.strip()
+                            count = count.strip()
+                            
+                            # 添加到资源列表，确保缩进正确
+                            # 与模板中的 {RDMA_RESOURCES} 保持相同的缩进（12个空格）
+                            rdma_resources.append(f"            {device_name}: {count}")
+            
+            if rdma_resources:
+                # 去重：只保留唯一的设备
+                unique_resources = []
+                seen_devices = set()
+                for resource in rdma_resources:
+                    # 提取设备名称（去掉缩进空格）
+                    device_name = resource.strip().split(':')[0].strip()
+                    if device_name not in seen_devices:
+                        unique_resources.append(resource)
+                        seen_devices.add(device_name)
+                
+                # 确保所有RDMA资源都有正确的缩进
+                normalized_resources = []
+                for i, resource in enumerate(unique_resources):
+                    # 提取设备名称和数量
+                    if ':' in resource:
+                        device_name, count = resource.split(':', 1)
+                        device_name = device_name.strip()
+                        count = count.strip()
+                        # 第一个设备不缩进，其他设备正常缩进
+                        if i == 0:
+                            normalized_resource = f"{device_name}: {count}"
+                        else:
+                            normalized_resource = f"            {device_name}: {count}"
+                        normalized_resources.append(normalized_resource)
+                
+                logger.info(f"发现 {len(rdma_resources)} 个RDMA设备，去重后 {len(unique_resources)} 个")
+                return '\n'.join(normalized_resources)
+        
+        # 如果kubectl-resource-view失败，返回默认RDMA资源
+        logger.warning("无法获取RDMA资源信息，使用默认配置")
+        return "rdma/hca: 8"
+        
+    except Exception as e:
+        logger.error(f"获取RDMA资源失败: {e}")
+        return "rdma/hca: 8"
+
 
 def cleanup_expired_data():
     """清理过期数据"""

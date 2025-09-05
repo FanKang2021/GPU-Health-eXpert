@@ -235,6 +235,32 @@ helm upgrade ghx ./helm/gpu-health-expert -n gpu-health-expert
 helm uninstall ghx -n gpu-health-expert
 ```
 
+### CORS Configuration
+
+The project supports simplified CORS configuration, only requiring the `CORS_ORIGINS` environment variable:
+
+```bash
+# Environment variable configuration (multiple addresses separated by commas)
+# Default localhost addresses are already included, only add additional addresses
+export CORS_ORIGINS="http://your-domain.com:31033,http://your-server-ip:31033"
+```
+
+**Note**: If the environment variable is not set, the system will use default development environment addresses.
+
+
+### Dynamic Resource Configuration
+
+The project supports dynamic detection of GPU and RDMA resource information through the `kubectl-resource-view` tool:
+
+```bash
+# Get GPU resource information
+curl http://your-server:31005/api/gpu-inspection/gpu-resource-info
+
+# Get RDMA resource information
+curl http://your-server:31005/api/gpu-inspection/rdma-resource-info
+```
+
+
 ### Deploy with YAML
 
 ```bash

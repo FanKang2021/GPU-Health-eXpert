@@ -87,7 +87,7 @@ spec:
             effect: "NoExecute"
           containers:
           - name: gpu-checker
-            image: kang2023/ghx-check:v1.0.0  # 使用我们的GPU检查镜像
+            image: kang2023/ghx-check:latest  # 使用我们的GPU检查镜像
             imagePullPolicy: IfNotPresent
             command: ["python3"]
             args: ["/opt/gpu_check_job.py"]
@@ -157,7 +157,7 @@ spec:
         effect: "NoExecute"
       containers:
       - name: ghx-server
-        image: kang2023/ghx-server:v1.0.0  # GHX统一服务镜像
+        image: kang2023/ghx-server:latest  # GHX统一服务镜像
         imagePullPolicy: IfNotPresent
         env:
         - name: GPU_RESULT_RETENTION_DAYS
@@ -166,6 +166,9 @@ spec:
           value: "5000"
         - name: KUBECONFIG
           value: "/root/.kube/config"
+        # CORS配置环境变量
+        - name: CORS_ORIGINS
+          value: "http://<your-server-ip>:<service-port>"  # 添加您的实际服务地址，默认localhost地址已包含
         ports:
         - containerPort: 5000
         volumeMounts:
@@ -224,7 +227,7 @@ spec:
     spec:
       containers:
       - name: ghx-dashboard
-        image: kang2023/ghx-dashboard:v1.0.0  # GHX前端Dashboard镜像
+        image: kang2023/ghx-dashboard:latest  # GHX前端Dashboard镜像
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000

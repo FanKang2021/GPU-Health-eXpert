@@ -198,7 +198,7 @@ metadata:
   namespace: gpu-health-expert
 spec:
   selector:
-    app: ghx-service
+    app: ghx-server
   ports:
   - name: http
     port: 5000

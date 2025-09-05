@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Values.namespace }}
 spec:
   selector:
-    app: ghx-service
+    app: ghx-server
   ports:
     - name: http
       port: {{ .Values.ghxServer.port }}

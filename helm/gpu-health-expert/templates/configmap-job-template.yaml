@@ -65,10 +65,10 @@ data:
             resources:
               requests:
                 {GPU_RESOURCE_NAME}: 8
-                {RDMA_RESOURCES}
+                {RDMA_RESOURCES}: 1
               limits:
                 {GPU_RESOURCE_NAME}: 8
-                {RDMA_RESOURCES}
+                {RDMA_RESOURCES}: 1
             volumeMounts:
             - name: shared-results
               mountPath: /shared

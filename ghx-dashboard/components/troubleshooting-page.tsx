@@ -299,6 +299,39 @@ export default function TroubleshootingPage({ theme, language, t }: Troubleshoot
     )
   }
 
+  // 计算完成时间：created_at + execution_time
+  const calculateCompletionTime = (createdAt: string, executionTime: string): string => {
+    if (!createdAt || !executionTime || executionTime === 'N/A') {
+      return createdAt || 'N/A'
+    }
+    
+    try {
+      // 解析创建时间
+      const startTime = new Date(createdAt)
+      
+      // 解析执行时长 (格式: "0:00:47.562983" 或 "47.562983")
+      let executionSeconds = 0
+      if (executionTime.includes(':')) {
+        // 格式: "0:00:47.562983"
+        const parts = executionTime.split(':')
+        const hours = parseInt(parts[0]) || 0
+        const minutes = parseInt(parts[1]) || 0
+        const seconds = parseFloat(parts[2]) || 0
+        executionSeconds = hours * 3600 + minutes * 60 + seconds
+      } else {
+        // 格式: "47.562983"
+        executionSeconds = parseFloat(executionTime) || 0
+      }
+      
+      // 计算完成时间
+      const completionTime = new Date(startTime.getTime() + executionSeconds * 1000)
+      return completionTime.toISOString()
+    } catch (error) {
+      console.error('计算完成时间失败:', error)
+      return createdAt || 'N/A'
+    }
+  }
+
   // 节点状态判断函数 - 根据所有测试结果判断节点是否通过
   const getNodeStatus = (result: any): string => {
     if (!result) return 'Unknown'
@@ -1225,7 +1258,7 @@ export default function TroubleshootingPage({ theme, language, t }: Troubleshoot
 GPU类型: ${result.gpuType || 'N/A'}
 Job ID: ${result.jobId || 'N/A'}
 DCGM诊断级别: ${result.dcgmLevel || 'N/A'}
-完成时间: ${result.timestamp || result.createdAt || result.executionTime || 'N/A'}
+完成时间: ${calculateCompletionTime(result.createdAt, result.executionTime) || 'N/A'}
 整体结果: ${result.inspectionResult || 'N/A'}
 性能测试: ${result.performancePass ? t.pass : t.noPass}
 健康检查: ${result.healthPass ? t.pass : t.noPass}
@@ -1578,7 +1611,7 @@ ${executionLog}
 GPU类型: ${result.gpuType || 'N/A'}
 Job ID: ${result.jobId || 'N/A'}
 DCGM诊断级别: ${result.dcgmLevel || 'N/A'}
-完成时间: ${result.timestamp || result.createdAt || result.executionTime || 'N/A'}
+完成时间: ${calculateCompletionTime(result.createdAt, result.executionTime) || 'N/A'}
 整体结果: ${result.inspectionResult || 'N/A'}
 性能测试: ${result.performancePass ? t.pass : t.noPass}
 健康检查: ${result.healthPass ? t.pass : t.noPass}
@@ -2093,9 +2126,9 @@ ${executionLog}
       // DCGM和IB检查根据是否启用来决定显示内容
       dcgmDiag: isDcgmEnabled ? (result.dcgmDiag || 'N/A') : 'N/A',
       ibCheck: isIbEnabled ? (result.ibCheck || 'N/A') : 'N/A',
-      timestamp: formatTime(result.timestamp || result.executionTime || 'N/A'),
+      timestamp: formatTime(calculateCompletionTime(result.createdAt, result.executionTime) || 'N/A'),
       // 创建时间应该显示Job的创建时间，而不是执行时长
-      executionTime: formatTime(result.createdAt || result.timestamp || result.creationTimestamp || 'N/A'),
+      executionTime: formatTime(result.creationTimestamp || result.createdAt || result.timestamp || 'N/A'),
       executionLog: result.executionLog || 'N/A',
       // 保持原始数据用于状态判断
       originalResult: result
@@ -2742,7 +2775,9 @@ ${executionLog}
                             <Badge variant={
                               (() => {
                                 const lowerStatus = job.status?.toLowerCase()
-                                if (lowerStatus === 'pending' || lowerStatus === 'running' || lowerStatus === 'creating') {
+                                if (lowerStatus === 'unknown') {
+                                  return 'outline'
+                                } else if (lowerStatus === 'pending' || lowerStatus === 'running' || lowerStatus === 'creating') {
                                   return 'secondary'
                                 } else if (lowerStatus === 'completed' || lowerStatus === 'succeeded' || lowerStatus === 'failed') {
                                   return 'default'
@@ -2788,7 +2823,7 @@ ${executionLog}
                               {(() => {
                                 const lowerStatus = job.status?.toLowerCase()
                                 return lowerStatus === 'completed' || lowerStatus === 'succeeded' || lowerStatus === 'failed' ||
-                                       job.status === 'cancelled' || job.status === 'Unknown'
+                                       lowerStatus === 'cancelled' || lowerStatus === 'unknown'
                               })() && (
                                 <Button
                                   variant="outline"
@@ -3274,7 +3309,7 @@ ${executionLog}
                       {t.completionTime || "完成时间"}:
                     </span>
                     <span className={`ml-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
-                      {formatTime(selectedResult.completedAt || selectedResult.timestamp || selectedResult.createdAt || selectedResult.executionTime)}
+                      {formatTime(calculateCompletionTime(selectedResult.createdAt, selectedResult.executionTime) || 'N/A')}
                     </span>
                   </div>
                   <div>

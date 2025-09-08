@@ -285,7 +285,40 @@ export function DashboardContent({ theme, language, t }: DashboardContentProps) 
     
     return () => clearInterval(interval)
   }, [])
-
+  
+  // 计算完成时间：created_at + execution_time
+  const calculateCompletionTime = (createdAt: string, executionTime: string): string => {
+    if (!createdAt || !executionTime || executionTime === 'N/A') {
+      return createdAt || 'N/A'
+    }
+    
+    try {
+      // 解析创建时间
+      const startTime = new Date(createdAt)
+      
+      // 解析执行时长 (格式: "0:00:47.562983" 或 "47.562983")
+      let executionSeconds = 0
+      if (executionTime.includes(':')) {
+        // 格式: "0:00:47.562983"
+        const parts = executionTime.split(':')
+        const hours = parseInt(parts[0]) || 0
+        const minutes = parseInt(parts[1]) || 0
+        const seconds = parseFloat(parts[2]) || 0
+        executionSeconds = hours * 3600 + minutes * 60 + seconds
+      } else {
+        // 格式: "47.562983"
+        executionSeconds = parseFloat(executionTime) || 0
+      }
+      
+      // 计算完成时间
+      const completionTime = new Date(startTime.getTime() + executionSeconds * 1000)
+      return completionTime.toISOString()
+    } catch (error) {
+      console.error('计算完成时间失败:', error)
+      return createdAt || 'N/A'
+    }
+  }
+  
   const [usedGpuTypes, setUsedGpuTypes] = useState<string[]>([])
 
   const handleSort = (field: string) => {
@@ -789,7 +822,7 @@ ${log.executionLog || '无日志'}
                       {t.completionTime || "完成时间"}:
                     </span>
                     <span className={`ml-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
-                      {formatExecutionTime(selectedLog.completedAt || selectedLog.timestamp || selectedLog.createdAt || selectedLog.executionTime)}
+                      {formatExecutionTime(calculateCompletionTime(selectedLog.createdAt, selectedLog.executionTime) || 'N/A')}
                     </span>
                   </div>
                 </div>

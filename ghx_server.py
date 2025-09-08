@@ -965,7 +965,26 @@ def start_polling_status_check_thread():
                                     if new_status in ['Completed', 'Succeeded', 'Failed']:
                                         handle_job_completion(job_id)
                             else:
-                                logger.warning(f"无法获取Job {job_id} 的Kubernetes状态")
+                                # 如果无法获取Kubernetes状态，说明Job可能已被删除
+                                new_status = 'unknown'
+                                logger.warning(f"无法获取Job {job_id} 的Kubernetes状态，设为unknown")
+                                
+                                # 通知前端状态变化
+                                notify_job_status_change(job_id, new_status)
+                                
+                                # 更新数据库中的状态
+                                try:
+                                    conn = get_db_connection()
+                                    cursor = conn.cursor()
+                                    cursor.execute('''
+                                        UPDATE diagnostic_jobs 
+                                        SET status = ?, updated_at = datetime('now', 'localtime')
+                                        WHERE job_id = ?
+                                    ''', (new_status, job_id))
+                                    conn.commit()
+                                    conn.close()
+                                except Exception as db_error:
+                                    logger.warning(f"❌ 更新数据库失败: {db_error}")
                         except Exception as e:
                             logger.warning(f"检查Job {job_id} 状态失败: {e}")
                 else:
@@ -1611,28 +1630,40 @@ class GPUDataCollector:
             execution_log = data.get('execution_log', '')
             benchmark_data = data.get('benchmark', {})
             
-            cursor.execute('''
-                INSERT OR REPLACE INTO diagnostic_results 
-                (job_id, job_type, node_name, gpu_type, enabled_tests, dcgm_level, 
-                 inspection_result, performance_pass, health_pass, execution_time, 
-                 execution_log, benchmark_data, test_results, expires_at, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
-            ''', (
-                job_id,
-                'manual',
-                node_name,
-                gpu_type,
-                json.dumps(enabled_tests),
-                dcgm_level,
-                inspection_result,
-                performance_pass,
-                health_pass,
-                execution_time,
-                execution_log,
-                json.dumps(benchmark_data),
-                json.dumps(test_results),
-                datetime.now() + timedelta(days=7),  # 7天后过期
-            ))
+            # 先检查记录是否存在
+            cursor.execute('SELECT created_at FROM diagnostic_results WHERE job_id = ? AND node_name = ?', (job_id, node_name))
+            existing_record = cursor.fetchone()
+            
+            if existing_record:
+                # 记录存在，更新时保持原有created_at
+                cursor.execute('''
+                    UPDATE diagnostic_results 
+                    SET job_type = ?, gpu_type = ?, enabled_tests = ?, dcgm_level = ?,
+                        inspection_result = ?, performance_pass = ?, health_pass = ?,
+                        execution_time = ?, execution_log = ?, benchmark_data = ?,
+                        test_results = ?, expires_at = ?, updated_at = datetime('now', 'localtime')
+                    WHERE job_id = ? AND node_name = ?
+                ''', (
+                    'manual', node_name, gpu_type, json.dumps(enabled_tests),
+                    dcgm_level, inspection_result, performance_pass, health_pass,
+                    execution_time, execution_log, json.dumps(benchmark_data),
+                    json.dumps(test_results), datetime.now() + timedelta(days=7),
+                    job_id, node_name
+                ))
+            else:
+                # 记录不存在，插入新记录
+                cursor.execute('''
+                    INSERT INTO diagnostic_results 
+                    (job_id, job_type, node_name, gpu_type, enabled_tests, dcgm_level, 
+                     inspection_result, performance_pass, health_pass, execution_time, 
+                     execution_log, benchmark_data, test_results, expires_at, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+                ''', (
+                    job_id, 'manual', node_name, gpu_type, json.dumps(enabled_tests),
+                    dcgm_level, inspection_result, performance_pass, health_pass,
+                    execution_time, execution_log, json.dumps(benchmark_data),
+                    json.dumps(test_results), datetime.now() + timedelta(days=7)
+                ))
             
             # 同时更新Job状态为completed
             cursor.execute('''
@@ -2971,7 +3002,10 @@ def create_gpu_inspection_job():
             
             # 处理RDMA资源：如果为空则删除整行，否则替换变量
             if rdma_resources.strip():
-                node_job_yaml = node_job_yaml.replace('{RDMA_RESOURCES}', rdma_resources)
+                # 将逗号分隔的资源名称转换为多行格式，每个资源都包含数量
+                rdma_device_names = [name.strip() for name in rdma_resources.split(',') if name.strip()]
+                rdma_resources_formatted = '\n'.join([f"            {name}: 1" for name in rdma_device_names])
+                node_job_yaml = node_job_yaml.replace('            {RDMA_RESOURCES}: 1', rdma_resources_formatted)
             else:
                 # 删除包含 {RDMA_RESOURCES} 的整行
                 lines = node_job_yaml.split('\n')
@@ -3149,11 +3183,11 @@ def list_gpu_inspection_jobs():
                     logger.debug(f"Job状态未变化，发送心跳: {pod_status}")
                     notify_job_status_change(job['job_id'], pod_status)
             else:
-                # 如果无法获取Kubernetes状态，使用数据库中的状态
-                pod_status = current_status
-                logger.info(f"Job {job['job_id']}: 无法获取K8s状态，使用数据库状态={current_status}")
+                # 如果无法获取Kubernetes状态，说明Job可能已被删除或不存在
+                pod_status = 'unknown'
+                logger.info(f"Job {job['job_id']}: 无法获取K8s状态，Job可能已被删除，状态设为unknown")
                 # 发送心跳通知，确保前端连接活跃
-                notify_job_status_change(job['job_id'], current_status)
+                notify_job_status_change(job['job_id'], 'unknown')
             
             job_info = {
                 "name": job['job_name'],
@@ -3224,6 +3258,7 @@ def get_diagnostic_results():
             # 解析测试结果数据（来自合并前的gpu_cli.py）
             test_results = json.loads(result['test_results']) if result['test_results'] else {}
             benchmark_data = json.loads(result['benchmark_data']) if result['benchmark_data'] else {}
+            
             
             # 构建完整的测试结果信息（来自合并前的gpu_cli.py）
             result_info = {
@@ -3548,28 +3583,43 @@ def save_diagnostic_result():
         cursor = conn.cursor()
         
         try:
-            cursor.execute('''
-                INSERT OR REPLACE INTO diagnostic_results 
-                (job_id, job_type, node_name, gpu_type, enabled_tests, dcgm_level, 
-                 inspection_result, performance_pass, health_pass, execution_time, 
-                 execution_log, benchmark_data, test_results, expires_at, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
-            ''', (
-                data['job_id'],
-                data.get('job_type', 'manual'),
-                data['node_name'],
-                data['gpu_type'],
-                json.dumps(data['enabled_tests']),
-                data['dcgm_level'],
-                data['inspection_result'],
-                data['performance_pass'],
-                data['health_pass'],
-                data['execution_time'],
-                data['execution_log'],
-                json.dumps(data['benchmark_data']),
-                json.dumps(data['test_results']),
-                datetime.now() + timedelta(days=7),  # 7天后过期
-            ))
+            # 先检查记录是否存在
+            cursor.execute('SELECT created_at FROM diagnostic_results WHERE job_id = ? AND node_name = ?', (data['job_id'], data['node_name']))
+            existing_record = cursor.fetchone()
+            
+            if existing_record:
+                # 记录存在，更新时保持原有created_at
+                cursor.execute('''
+                    UPDATE diagnostic_results 
+                    SET job_type = ?, gpu_type = ?, enabled_tests = ?, dcgm_level = ?,
+                        inspection_result = ?, performance_pass = ?, health_pass = ?,
+                        execution_time = ?, execution_log = ?, benchmark_data = ?,
+                        test_results = ?, expires_at = ?, updated_at = datetime('now', 'localtime')
+                    WHERE job_id = ? AND node_name = ?
+                ''', (
+                    data.get('job_type', 'manual'), data['node_name'], data['gpu_type'],
+                    json.dumps(data['enabled_tests']), data['dcgm_level'],
+                    data['inspection_result'], data['performance_pass'], data['health_pass'],
+                    data['execution_time'], data['execution_log'],
+                    json.dumps(data['benchmark_data']), json.dumps(data['test_results']),
+                    datetime.now() + timedelta(days=7), data['job_id'], data['node_name']
+                ))
+            else:
+                # 记录不存在，插入新记录
+                cursor.execute('''
+                    INSERT INTO diagnostic_results 
+                    (job_id, job_type, node_name, gpu_type, enabled_tests, dcgm_level, 
+                     inspection_result, performance_pass, health_pass, execution_time, 
+                     execution_log, benchmark_data, test_results, expires_at, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+                ''', (
+                    data['job_id'], data.get('job_type', 'manual'), data['node_name'],
+                    data['gpu_type'], json.dumps(data['enabled_tests']), data['dcgm_level'],
+                    data['inspection_result'], data['performance_pass'], data['health_pass'],
+                    data['execution_time'], data['execution_log'],
+                    json.dumps(data['benchmark_data']), json.dumps(data['test_results']),
+                    datetime.now() + timedelta(days=7)
+                ))
             
             # 同时更新Job状态为completed
             cursor.execute('''
@@ -3893,8 +3943,8 @@ def get_job_status(job_id):
         if k8s_status:
             pod_status = k8s_status['pod_status']
         else:
-            # 如果无法获取Kubernetes状态，使用数据库中的状态
-            pod_status = job['status']
+            # 如果无法获取Kubernetes状态，说明Job可能已被删除或不存在
+            pod_status = 'unknown'
         
         # 如果Job已完成或失败，自动触发入库
         if (pod_status in ['Completed', 'Succeeded', 'Failed'] or 
@@ -4338,53 +4388,25 @@ def get_rdma_resources(node_name=None):
                 if 'rdma/' in line:
                     # 使用正则表达式提取rdma设备信息
                     import re
-                    # 匹配所有 rdma/ 开头的设备: Y 格式
-                    rdma_pattern = r'rdma/[^:\s]+:\s*(\d+)'
-                    matches = re.findall(rdma_pattern, line)
+                    # 匹配所有 rdma/ 开头的设备: Y 格式，同时捕获设备名称和数量
+                    matches = re.findall(r'rdma/([^:\s]+):\s*(\d+)', line)
                     
-                    if matches:
-                        # 重新匹配完整的设备信息
-                        full_pattern = r'rdma/[^:\s]+:\s*\d+'
-                        full_matches = re.findall(full_pattern, line)
+                    for match in matches:
+                        device_name = f"rdma/{match[0]}"
+                        count = int(match[1])
                         
-                        for match in full_matches:
-                            # 提取设备名称和数量
-                            device_name, count = match.split(':')
-                            device_name = device_name.strip()
-                            count = count.strip()
-                            
-                            # 添加到资源列表，确保缩进正确
-                            # 与模板中的 {RDMA_RESOURCES} 保持相同的缩进（12个空格）
-                            rdma_resources.append(f"            {device_name}: {count}")
+                        if count > 0:  # 只添加有数量的设备
+                            # 添加到资源列表，只返回资源名称
+                            # 数量由用户在模板中定义
+                            rdma_resources.append(device_name)
             
             if rdma_resources:
-                # 去重：只保留唯一的设备
-                unique_resources = []
-                seen_devices = set()
-                for resource in rdma_resources:
-                    # 提取设备名称（去掉缩进空格）
-                    device_name = resource.strip().split(':')[0].strip()
-                    if device_name not in seen_devices:
-                        unique_resources.append(resource)
-                        seen_devices.add(device_name)
-                
-                # 确保所有RDMA资源都有正确的缩进
-                normalized_resources = []
-                for i, resource in enumerate(unique_resources):
-                    # 提取设备名称和数量
-                    if ':' in resource:
-                        device_name, count = resource.split(':', 1)
-                        device_name = device_name.strip()
-                        count = count.strip()
-                        # 第一个设备不缩进，其他设备正常缩进
-                        if i == 0:
-                            normalized_resource = f"{device_name}: {count}"
-                        else:
-                            normalized_resource = f"            {device_name}: {count}"
-                        normalized_resources.append(normalized_resource)
+                # 去重：只保留唯一的设备名称
+                unique_resources = list(set(rdma_resources))
                 
                 logger.info(f"发现 {len(rdma_resources)} 个RDMA设备，去重后 {len(unique_resources)} 个")
-                return '\n'.join(normalized_resources)
+                # 返回去重后的资源名称列表，用逗号分隔
+                return ','.join(unique_resources)
         
         # 如果kubectl-resource-view失败，返回空字符串（删除模板中的变量）
         logger.warning("无法获取RDMA资源信息，将删除模板中的RDMA资源配置")

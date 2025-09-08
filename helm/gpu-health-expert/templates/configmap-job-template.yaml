@@ -39,7 +39,7 @@ data:
             kubernetes.io/hostname: "{NODE_NAME}"  # 直接指定前端选择的节点
           containers:
           - name: gpu-checker
-            image: {{ .Values.ghxServer.image.repository }}:{{ .Values.ghxServer.image.tag }}
+            image: {{ .Values.cronjob.image }}
             imagePullPolicy: IfNotPresent
             command: ["python3"]
             args: ["/opt/gpu_check_job.py"]

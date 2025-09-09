@@ -218,8 +218,8 @@ class GPUChecker:
             self.log_collector.add_log("=== 开始带宽测试 ===")
             sys.stdout.flush()
             
-            # 运行8个GPU的带宽测试
-            cmd = "for i in {0..7}; do /usr/bin/bandwidthTest --device=${i}; done"
+            # 运行8个GPU的带宽测试 - 使用更兼容的语法
+            cmd = "for i in 0 1 2 3 4 5 6 7; do echo \"=== Testing GPU $i ===\"; /usr/bin/bandwidthTest --device=$i; done"
             print(f"执行命令: {cmd}")
             self.log_collector.add_log(f"执行命令: {cmd}")
             sys.stdout.flush()
@@ -254,24 +254,37 @@ class GPUChecker:
                 self.log_collector.add_log("开始解析带宽测试结果...")
                 sys.stdout.flush()
                 
-                # 根据参考代码解析输出
+                # 解析带宽测试输出 - 只取Host to Device和Device to Host的值
                 lines = result.stdout.split('\n')
-                index = 1
                 bwlist = []
+                current_gpu = None
+                bandwidth_type = None
                 
                 for line_num, line in enumerate(lines):
+                    # 检测GPU设备
+                    if "Device " in line and ":" in line:
+                        current_gpu = line.strip()
+                        print(f"检测到GPU设备: {current_gpu}")
+                        self.log_collector.add_log(f"检测到GPU设备: {current_gpu}")
+                        bandwidth_type = None  # 重置带宽类型
+                    
+                    # 检测带宽类型
+                    elif "Host to Device Bandwidth" in line:
+                        bandwidth_type = "Host to Device"
+                    elif "Device to Host Bandwidth" in line:
+                        bandwidth_type = "Device to Host"
+                    elif "Device to Device Bandwidth" in line:
+                        bandwidth_type = "Device to Device"  # 跳过这个类型
+                    
                     # 查找包含"32000000"的行（32MB传输）
-                    if "32000000" in line:
+                    elif "32000000" in line and bandwidth_type and bandwidth_type != "Device to Device":
                         line_parts = line.split()
                         if len(line_parts) >= 2:
                             try:
-                                # 根据参考代码：每3行取前2行，跳过第3行
-                                if index % 3 != 0:
-                                    bw_value = float(line_parts[1])
-                                    bwlist.append(bw_value)
-                                    print(f"找到带宽值: {bw_value} GB/s")
-                                    self.log_collector.add_log(f"找到带宽值: {bw_value} GB/s")
-                                index += 1
+                                bw_value = float(line_parts[1])
+                                bwlist.append(bw_value)
+                                print(f"找到{bandwidth_type}带宽值: {bw_value} GB/s (GPU: {current_gpu})")
+                                self.log_collector.add_log(f"找到{bandwidth_type}带宽值: {bw_value} GB/s (GPU: {current_gpu})")
                             except (IndexError, ValueError):
                                 continue
                 
@@ -326,8 +339,8 @@ class GPUChecker:
             self.log_collector.add_log("=== 开始P2P测试 ===")
             sys.stdout.flush()
             
-            # 运行8个GPU的P2P测试
-            cmd = "for i in {0..7}; do /usr/bin/p2pBandwidthLatencyTest --device=${i}; done"
+            # 运行8个GPU的P2P测试 - 使用更兼容的语法
+            cmd = "for i in 0 1 2 3 4 5 6 7; do echo \"=== Testing P2P GPU $i ===\"; /usr/bin/p2pBandwidthLatencyTest --device=$i; done"
             print(f"执行命令: {cmd}")
             self.log_collector.add_log(f"执行命令: {cmd}")
             sys.stdout.flush()
@@ -372,14 +385,10 @@ class GPUChecker:
                     # 查找Bidirectional P2P=Enabled矩阵开始
                     if "Bidirectional P2P=Enabled Bandwidth Matrix (GB/s)" in line:
                         p2pflag = 1
-                        print("找到P2P带宽矩阵开始标记")
-                        self.log_collector.add_log("找到P2P带宽矩阵开始标记")
                         continue
                     
                     # 遇到P2P=Disabled Latency Matrix时停止
                     if "P2P=Disabled Latency Matrix (us)" in line:
-                        print("遇到P2P延迟矩阵，停止解析")
-                        self.log_collector.add_log("遇到P2P延迟矩阵，停止解析")
                         break
                     
                     # 在矩阵范围内解析数值
@@ -400,9 +409,6 @@ class GPUChecker:
                                     except (ValueError, IndexError):
                                         continue
                 
-                print(f"原始P2P值列表: {p2plist}")
-                self.log_collector.add_log(f"原始P2P值列表: {p2plist}")
-                
                 # 根据参考代码：移除对角线元素（每9个元素移除第1个）
                 if p2plist:
                     j = 0
@@ -411,9 +417,6 @@ class GPUChecker:
                             if i - j < len(p2plist):
                                 p2plist.pop(i - j)
                                 j += 1
-                    
-                    print(f"移除对角线元素后，剩余 {len(p2plist)} 个P2P值")
-                    self.log_collector.add_log(f"移除对角线元素后，剩余 {len(p2plist)} 个P2P值")
                 
                 if p2plist:
                     # 根据参考代码：返回最小值

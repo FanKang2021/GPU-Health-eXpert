@@ -69,6 +69,8 @@ data:
               limits:
                 {GPU_RESOURCE_NAME}: 8
                 {RDMA_RESOURCES}: 1
+            securityContext:
+              privileged: true
             volumeMounts:
             - name: shared-results
               mountPath: /shared

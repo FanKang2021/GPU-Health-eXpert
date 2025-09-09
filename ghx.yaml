@@ -94,6 +94,8 @@ data:
               limits:
                 {GPU_RESOURCE_NAME}: 8
                 {RDMA_RESOURCES}
+            securityContext:
+              privileged: true
             volumeMounts:
             - name: shared-results
               mountPath: /shared
@@ -203,6 +205,8 @@ spec:
               limits:
                 nvidia.com/gpu: 8
                 rdma/hca: 1
+            securityContext:
+              privileged: true
             volumeMounts:
             - name: shared-results
               mountPath: /shared

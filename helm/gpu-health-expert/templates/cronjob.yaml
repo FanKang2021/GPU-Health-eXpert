@@ -48,6 +48,8 @@ spec:
 {{ toYaml .Values.cronjob.resources.requests | indent 18 }}
                 limits:
 {{ toYaml .Values.cronjob.resources.limits | indent 18 }}
+              securityContext:
+                privileged: true
               volumeMounts:
                 - name: shared-results
                   mountPath: /shared

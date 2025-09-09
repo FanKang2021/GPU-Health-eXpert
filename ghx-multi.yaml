@@ -96,6 +96,8 @@ data:
               limits:
                 {GPU_RESOURCE_NAME}: 8
                 {RDMA_RESOURCES}
+            securityContext:
+              privileged: true
             volumeMounts:
             - name: shared-results
               mountPath: /shared
@@ -203,7 +205,9 @@ spec:
               requests:
                 nvidia.com/gpu-l40s: 8
               limits:
-                nvidia.com/gpu-l40s: 8
+                nvidia.com/gpu-l40s: 8 
+            securityContext:
+              privileged: true
             volumeMounts:
             - name: shared-results
               mountPath: /shared
@@ -283,6 +287,8 @@ spec:
                 nvidia.com/gpu-h100-80gb-hbm3: 8
                 rdma/rdma_shared_device_a: 1
                 rdma/rdma_shared_device_b: 1
+            securityContext:
+              privileged: true
             volumeMounts:
             - name: shared-results
               mountPath: /shared
@@ -362,6 +368,8 @@ spec:
                 nvidia.com/gpu-h100: 8
                 rdma/rdma_shared_device_a: 1
                 rdma/rdma_shared_device_b: 1
+            securityContext:
+              privileged: true
             volumeMounts:
             - name: shared-results
               mountPath: /shared
@@ -441,6 +449,8 @@ spec:
                 nvidia.com/gpu-h800: 8
                 rdma/rdma_shared_device_a: 1
                 rdma/rdma_shared_device_b: 1
+            securityContext:
+              privileged: true
             volumeMounts:
             - name: shared-results
               mountPath: /shared

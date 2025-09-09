@@ -149,7 +149,7 @@ class GPUChecker:
             else:
                 # manual类型保存到manual目录
                 save_dir = os.path.join(RESULTS_DIR, 'manual')
-            filename = f"{node_name}_{timestamp}.json"
+                filename = f"{node_name}_{timestamp}.json"
                 latest_filename = f"{node_name}_latest.json"
             
             # 确保目录存在
@@ -386,7 +386,7 @@ class GPUChecker:
                     if p2pflag == 1:
                         index += 1
                         if index >= 3:  # 跳过前两行（标题行）
-                        line_parts = line.split()
+                            line_parts = line.split()
                             if len(line_parts) > 1:
                                 # 移除第一个元素（设备索引）
                                 line_parts.pop(0)
@@ -398,19 +398,19 @@ class GPUChecker:
                                         print(f"找到P2P值: {p2p_value} GB/s")
                                         self.log_collector.add_log(f"找到P2P值: {p2p_value} GB/s")
                                     except (ValueError, IndexError):
-                                    continue
+                                        continue
                 
                 print(f"原始P2P值列表: {p2plist}")
                 self.log_collector.add_log(f"原始P2P值列表: {p2plist}")
                 
                 # 根据参考代码：移除对角线元素（每9个元素移除第1个）
                 if p2plist:
-                j = 0
-                for i in range(len(p2plist)):
-                    if i % 9 == 0:
-                        if i - j < len(p2plist):
-                            p2plist.pop(i - j)
-                            j += 1
+                    j = 0
+                    for i in range(len(p2plist)):
+                        if i % 9 == 0:
+                            if i - j < len(p2plist):
+                                p2plist.pop(i - j)
+                                j += 1
                     
                     print(f"移除对角线元素后，剩余 {len(p2plist)} 个P2P值")
                     self.log_collector.add_log(f"移除对角线元素后，剩余 {len(p2plist)} 个P2P值")
@@ -463,7 +463,7 @@ class GPUChecker:
             sys.stdout.flush()
             
             # 运行NCCL测试 - 修复路径
-            cmd = "/opt/nccl-tests/build/all_reduce_perf -b 8 -e 1G -f 2 -g 8"
+            cmd = "/opt/nccl-tests/build/all_reduce_perf -b 1024 -e 1G -f 2 -g 8"
             print(f"执行命令: {cmd}")
             self.log_collector.add_log(f"执行命令: {cmd}")
             sys.stdout.flush()
@@ -617,8 +617,8 @@ class GPUChecker:
                 print(f"=== {result_msg} ===")
                 self.log_collector.add_log(result_msg)
                 sys.stdout.flush()
-                        return "Pass"
-                else:
+                return "Pass"
+            else:
                 result_msg = f"DCGM诊断失败，级别{self.config['dcgm_level']}"
                 print(f"=== {result_msg} ===")
                 self.log_collector.add_log(result_msg)
@@ -695,7 +695,7 @@ class GPUChecker:
                 sys.stdout.flush()
             
             if result.returncode == 0:
-            output = result.stdout
+                output = result.stdout
                 print("开始解析IB健康检查结果...")
                 self.log_collector.add_log("开始解析IB健康检查结果...")
                 sys.stdout.flush()
@@ -843,8 +843,8 @@ def main():
         checker.save_result_to_pvc(result)
         
         print("=== GPU检查完成，结果已保存到PVC ===")
-            sys.exit(0)
-            
+        sys.exit(0)
+        
     except Exception as e:
         error_msg = f"GPU检查失败: {e}"
         print(error_msg)

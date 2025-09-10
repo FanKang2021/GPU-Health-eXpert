@@ -128,7 +128,7 @@ export function SidebarNavigation({ theme, language, currentPage, onPageChange }
             <Settings className="w-3 h-3" />
             <span>GPU Health Expert</span>
           </div>
-          <div className="mt-1">Version 1.0</div>
+          <div className="mt-1">Version 1.1.7</div>
         </div>
       )}
     </Card>

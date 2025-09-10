@@ -2942,14 +2942,14 @@ def create_gpu_inspection_job():
             return jsonify({"error": "请求数据为空"}), 400
         
         # 验证必需参数
-        required_fields = ['selectedNodes', 'enabledTests', 'dcgmLevel']
+        required_fields = ['selectedNodes', 'enabledTests']
         for field in required_fields:
             if field not in data:
                 return jsonify({"error": f"缺少必需参数: {field}"}), 400
         
         selected_nodes = data['selectedNodes']
         enabled_tests = data['enabledTests']
-        dcgm_level = data['dcgmLevel']
+        dcgm_level = data.get('dcgmLevel', 1)  # 如果不存在则使用默认值1
         
         # 验证参数
         if not selected_nodes:
@@ -2958,7 +2958,8 @@ def create_gpu_inspection_job():
         if not enabled_tests:
             return jsonify({"error": "必须选择至少一个检查项目"}), 400
         
-        if dcgm_level not in [1, 2, 3, 4]:
+        # 只有当选择了dcgm检查项时才验证dcgm级别
+        if 'dcgmDiag' in enabled_tests and dcgm_level not in [1, 2, 3, 4]:
             return jsonify({"error": "DCGM级别必须是1-4之间的整数"}), 400
         
         # 生成唯一的Job ID

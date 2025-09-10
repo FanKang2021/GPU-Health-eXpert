@@ -1001,7 +1001,7 @@ export default function TroubleshootingPage({ theme, language, t }: Troubleshoot
       const requestBody = {
         selectedNodes,
         enabledTests,
-        dcgmLevel
+        ...(enabledTests.includes('dcgmDiag') && { dcgmLevel })
       }
       
       console.log('发送到后端的请求体:', JSON.stringify(requestBody, null, 2))
@@ -1257,7 +1257,7 @@ export default function TroubleshootingPage({ theme, language, t }: Troubleshoot
 主机名称: ${result.nodeName || result.hostname || 'N/A'}
 GPU类型: ${result.gpuType || 'N/A'}
 Job ID: ${result.jobId || 'N/A'}
-DCGM诊断级别: ${result.dcgmLevel || 'N/A'}
+DCGM诊断级别: ${result.enabledTests && result.enabledTests.includes('dcgmDiag') ? (result.dcgmLevel || 'N/A') : 'N/A'}
 完成时间: ${calculateCompletionTime(result.createdAt, result.executionTime) || 'N/A'}
 整体结果: ${result.inspectionResult || 'N/A'}
 性能测试: ${result.performancePass ? t.pass : t.noPass}
@@ -1610,7 +1610,7 @@ ${executionLog}
 主机名称: ${result.nodeName || result.hostname || 'N/A'}
 GPU类型: ${result.gpuType || 'N/A'}
 Job ID: ${result.jobId || 'N/A'}
-DCGM诊断级别: ${result.dcgmLevel || 'N/A'}
+DCGM诊断级别: ${result.enabledTests && result.enabledTests.includes('dcgmDiag') ? (result.dcgmLevel || 'N/A') : 'N/A'}
 完成时间: ${calculateCompletionTime(result.createdAt, result.executionTime) || 'N/A'}
 整体结果: ${result.inspectionResult || 'N/A'}
 性能测试: ${result.performancePass ? t.pass : t.noPass}
@@ -2797,7 +2797,7 @@ ${executionLog}
                             {job.enabledTests?.join(', ') || 'N/A'}
                           </TableCell>
                           <TableCell className={theme === "dark" ? "text-white" : "text-gray-900"}>
-                            {job.dcgmLevel || 1}
+                            {job.enabledTests && job.enabledTests.includes('dcgmDiag') ? (job.dcgmLevel || 1) : 'N/A'}
                           </TableCell>
                           <TableCell className={theme === "dark" ? "text-white" : "text-gray-900"}>
                             {formatTime(job.creationTimestamp || job.createdAt || 'N/A')}
@@ -3301,7 +3301,7 @@ ${executionLog}
                       {t.dcgmDiagnosticLevel}:
                     </span>
                     <span className={`ml-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
-                      {selectedResult.dcgmLevel}
+                      {selectedResult.enabledTests && selectedResult.enabledTests.includes('dcgmDiag') ? (selectedResult.dcgmLevel || 1) : 'N/A'}
                     </span>
                   </div>
                   <div>

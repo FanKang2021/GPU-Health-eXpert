@@ -27,7 +27,6 @@ import {
 } from "lucide-react"
 
 interface BurnInPageProps {
-  theme: "light" | "dark"
   language: "zh" | "en"
   t: any
 }
@@ -90,7 +89,7 @@ const generateMockBurnData = (nodeId: string, nodeName: string): GpuBurnData => 
   }
 }
 
-export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
+export default function BurnInPage({ language, t }: BurnInPageProps) {
   const [selectedNodes, setSelectedNodes] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
@@ -653,36 +652,55 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
   }, [runningTests, pollingInterval, pollingEnabled])
 
   return (
-    <div className={`space-y-6 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
-      <div>
-        <h1 className="text-3xl font-bold">{currentTexts.title}</h1>
-        <p className={`mt-2 ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>{currentTexts.description}</p>
+    <div className="space-y-8 text-foreground">
+      {/* 页面标题 */}
+      <div className="text-center space-y-4">
+        <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent animate-slide-in">
+          {currentTexts.title}
+        </h1>
+        <p className="text-lg text-muted-foreground font-mono animate-slide-in">
+          {currentTexts.description}
+        </p>
+        <div className="w-24 h-1 bg-gradient-primary mx-auto rounded-full animate-glow" />
       </div>
 
-      <Card className={theme === "dark" ? "bg-green-900/20 border-green-700" : "bg-green-50 border-green-200"}>
+      {/* 图标说明卡片 */}
+      <Card className="tech-card bg-gradient-to-br from-tech-blue/10 to-tech-purple/10 border-tech-blue/30 shadow-glow">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Info className="w-5 h-5" />
-            {currentTexts.iconExplanation}
+          <CardTitle className="flex items-center gap-3 text-lg">
+            <div className="p-2 rounded-lg bg-tech-blue/20">
+              <Info className="w-5 h-5 text-tech-blue" />
+            </div>
+            <span className="bg-gradient-primary bg-clip-text text-transparent">
+              {currentTexts.iconExplanation}
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-blue-500" />
-              <span className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>{currentTexts.cpuIcon}</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 backdrop-blur-sm hover:bg-secondary/50 transition-all duration-300">
+              <div className="p-2 rounded-lg bg-tech-blue/20">
+                <Cpu className="w-4 h-4 text-tech-blue" />
+              </div>
+              <span className="text-foreground font-medium">{currentTexts.cpuIcon}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-yellow-500" />
-              <span className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>{currentTexts.zapIcon}</span>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 backdrop-blur-sm hover:bg-secondary/50 transition-all duration-300">
+              <div className="p-2 rounded-lg bg-tech-yellow/20">
+                <Zap className="w-4 h-4 text-tech-yellow" />
+              </div>
+              <span className="text-foreground font-medium">{currentTexts.zapIcon}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-red-500" />
-              <span className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>{currentTexts.alertIcon}</span>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 backdrop-blur-sm hover:bg-secondary/50 transition-all duration-300">
+              <div className="p-2 rounded-lg bg-tech-red/20">
+                <AlertTriangle className="w-4 h-4 text-tech-red" />
+              </div>
+              <span className="text-foreground font-medium">{currentTexts.alertIcon}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Thermometer className="w-4 h-4 text-orange-500" />
-              <span className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 backdrop-blur-sm hover:bg-secondary/50 transition-all duration-300">
+              <div className="p-2 rounded-lg bg-tech-orange/20">
+                <Thermometer className="w-4 h-4 text-tech-orange" />
+              </div>
+              <span className="text-foreground font-medium">
                 {currentTexts.thermometerIcon}
               </span>
             </div>
@@ -690,47 +708,52 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
         </CardContent>
       </Card>
 
-      <Card className={theme === "dark" ? "bg-blue-900/20 border-blue-700" : "bg-blue-50 border-blue-200"}>
+      {/* 数据说明卡片 */}
+      <Card className="tech-card bg-gradient-to-br from-tech-cyan/10 to-tech-blue/10 border-tech-cyan/30 shadow-glow">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Info className="w-5 h-5" />
-            {currentTexts.explanationTitle}
+          <CardTitle className="flex items-center gap-3 text-lg">
+            <div className="p-2 rounded-lg bg-tech-cyan/20">
+              <Info className="w-5 h-5 text-tech-cyan" />
+            </div>
+            <span className="bg-gradient-secondary bg-clip-text text-transparent">
+              {currentTexts.explanationTitle}
+            </span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>
-                <strong className={theme === "dark" ? "text-white" : "text-gray-900"}>{currentTexts.progress}:</strong>{" "}
-                {currentTexts.progressExplanation}
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+            <div className="p-4 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
+              <p className="text-foreground">
+                <strong className="text-tech-blue font-semibold">{currentTexts.progress}:</strong>{" "}
+                <span className="text-muted-foreground">{currentTexts.progressExplanation}</span>
               </p>
             </div>
-            <div>
-              <p className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>
-                <strong className={theme === "dark" ? "text-white" : "text-gray-900"}>
+            <div className="p-4 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
+              <p className="text-foreground">
+                <strong className="text-tech-green font-semibold">
                   {currentTexts.activeUnits}:
                 </strong>{" "}
-                {currentTexts.activeUnitsExplanation}
+                <span className="text-muted-foreground">{currentTexts.activeUnitsExplanation}</span>
               </p>
             </div>
-            <div>
-              <p className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>
-                <strong className={theme === "dark" ? "text-white" : "text-gray-900"}>{currentTexts.gflops}:</strong>{" "}
-                {currentTexts.gflopsExplanation}
+            <div className="p-4 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
+              <p className="text-foreground">
+                <strong className="text-tech-yellow font-semibold">{currentTexts.gflops}:</strong>{" "}
+                <span className="text-muted-foreground">{currentTexts.gflopsExplanation}</span>
               </p>
             </div>
-            <div>
-              <p className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>
-                <strong className={theme === "dark" ? "text-white" : "text-gray-900"}>{currentTexts.errors}:</strong>{" "}
-                {currentTexts.errorsExplanation}
+            <div className="p-4 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
+              <p className="text-foreground">
+                <strong className="text-tech-red font-semibold">{currentTexts.errors}:</strong>{" "}
+                <span className="text-muted-foreground">{currentTexts.errorsExplanation}</span>
               </p>
             </div>
-            <div className="md:col-span-2">
-              <p className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>
-                <strong className={theme === "dark" ? "text-white" : "text-gray-900"}>
+            <div className="md:col-span-2 p-4 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
+              <p className="text-foreground">
+                <strong className="text-tech-orange font-semibold">
                   {currentTexts.temperature}:
                 </strong>{" "}
-                {currentTexts.temperatureExplanation}
+                <span className="text-muted-foreground">{currentTexts.temperatureExplanation}</span>
               </p>
             </div>
           </div>
@@ -738,25 +761,32 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
       </Card>
 
       {/* 参数设置卡片 */}
-      <Card className={theme === "dark" ? "bg-pink-900/20 border-pink-700" : "bg-pink-50 border-pink-200"}>
+      <Card className="tech-card bg-gradient-to-br from-tech-purple/10 to-tech-pink/10 border-tech-purple/30 shadow-glow">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            {currentTexts.parameterSettings}
+          <CardTitle className="flex items-center gap-3 text-lg">
+            <div className="p-2 rounded-lg bg-tech-purple/20">
+              <Settings className="w-5 h-5 text-tech-purple" />
+            </div>
+            <span className="bg-gradient-to-r from-tech-purple to-tech-pink bg-clip-text text-transparent">
+              {currentTexts.parameterSettings}
+            </span>
           </CardTitle>
-          <CardDescription>{currentTexts.parameterSettingsDesc}</CardDescription>
+          <CardDescription className="text-muted-foreground font-mono">
+            {currentTexts.parameterSettingsDesc}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {/* 主要参数设置 - 横向布局 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* 显存设置 */}
-            <div className="space-y-3">
-              <h4 className={`font-medium text-sm ${theme === "dark" ? "text-gray-200" : "text-gray-800"}`}>
+            <div className="space-y-4 p-4 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
+              <h4 className="font-semibold text-sm text-tech-blue flex items-center gap-2">
+                <div className="w-2 h-2 bg-tech-blue rounded-full animate-pulse" />
                 {currentTexts.memorySettings}
               </h4>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-1">
+              <div className="space-y-3">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
                     <input
                       type="radio"
                       id="memory-fixed"
@@ -764,13 +794,13 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
                       value="fixed"
                       checked={memoryType === "fixed"}
                       onChange={(e) => setMemoryType(e.target.value as "fixed" | "percentage")}
-                      className="w-3 h-3 text-blue-600"
+                      className="w-4 h-4 text-tech-blue accent-tech-blue"
                     />
-                    <label htmlFor="memory-fixed" className={`text-xs ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                    <label htmlFor="memory-fixed" className="text-xs text-foreground font-medium">
                       {currentTexts.specifyMemory}
                     </label>
                   </div>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-2">
                     <input
                       type="radio"
                       id="memory-percentage"
@@ -778,23 +808,23 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
                       value="percentage"
                       checked={memoryType === "percentage"}
                       onChange={(e) => setMemoryType(e.target.value as "fixed" | "percentage")}
-                      className="w-3 h-3 text-blue-600"
+                      className="w-4 h-4 text-tech-blue accent-tech-blue"
                     />
-                    <label htmlFor="memory-percentage" className={`text-xs ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                    <label htmlFor="memory-percentage" className="text-xs text-foreground font-medium">
                       {currentTexts.memoryPercentage}
                     </label>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <Input
                     type="number"
                     value={memoryValue}
                     onChange={(e) => setMemoryValue(e.target.value)}
-                    className="w-20 h-8 text-sm"
+                    className="tech-input w-24 h-9 text-sm font-mono"
                     min="1"
                     max={memoryType === "percentage" ? "100" : "100000"}
                   />
-                  <span className={`text-xs ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                  <span className="text-xs text-tech-blue font-mono font-semibold">
                     {memoryType === "percentage" ? "%" : "MB"}
                   </span>
                 </div>
@@ -802,32 +832,34 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
             </div>
 
             {/* 测试时长 */}
-            <div className="space-y-3">
-              <h4 className={`font-medium text-sm ${theme === "dark" ? "text-gray-200" : "text-gray-800"}`}>
+            <div className="space-y-4 p-4 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
+              <h4 className="font-semibold text-sm text-tech-green flex items-center gap-2">
+                <div className="w-2 h-2 bg-tech-green rounded-full animate-pulse" />
                 {currentTexts.testDuration}
               </h4>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 <Input
                   type="number"
                   value={testDuration}
                   onChange={(e) => setTestDuration(e.target.value)}
-                  className="w-20 h-8 text-sm"
+                  className="tech-input w-24 h-9 text-sm font-mono"
                   min="1"
                   max="1440"
                 />
-                <span className={`text-xs ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                <span className="text-xs text-tech-green font-mono font-semibold">
                   {currentTexts.minutes}
                 </span>
               </div>
             </div>
 
             {/* 轮询控制 */}
-            <div className="space-y-3">
-              <h4 className={`font-medium text-sm ${theme === "dark" ? "text-gray-200" : "text-gray-800"}`}>
+            <div className="space-y-4 p-4 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
+              <h4 className="font-semibold text-sm text-tech-orange flex items-center gap-2">
+                <div className="w-2 h-2 bg-tech-orange rounded-full animate-pulse" />
                 {currentTexts.pollingInterval}
               </h4>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
                   <Checkbox
                     id="polling-enabled"
                     checked={pollingEnabled}
@@ -838,17 +870,17 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
                         localStorage.setItem('burnin-polling-enabled', enabled.toString())
                       }
                     }}
-                    className="w-3 h-3"
+                    className="w-4 h-4 text-tech-orange accent-tech-orange"
                   />
                   <label 
                     htmlFor="polling-enabled" 
-                    className={`text-xs font-medium ${theme === "dark" ? "text-gray-200" : "text-gray-800"}`}
+                    className="text-xs font-semibold text-foreground"
                   >
                     {pollingEnabled ? currentTexts.pollingEnabled : currentTexts.pollingDisabled}
                   </label>
                 </div>
                 {pollingEnabled && (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3">
                     <Input
                       type="number"
                       value={pollingInterval}
@@ -859,11 +891,11 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
                           localStorage.setItem('burnin-polling-interval', value)
                         }
                       }}
-                      className="w-16 h-8 text-sm"
+                      className="tech-input w-20 h-9 text-sm font-mono"
                       min="1"
                       max="60"
                     />
-                    <span className={`text-xs ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                    <span className="text-xs text-tech-orange font-mono font-semibold">
                       {currentTexts.seconds}
                     </span>
                   </div>
@@ -872,71 +904,84 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
             </div>
           </div>
 
-          {/* 当前参数显示 - 紧凑布局 */}
-          <div className={`p-3 rounded-lg ${theme === "dark" ? "bg-gray-700/50" : "bg-gray-100/50"}`}>
+          {/* 当前参数显示 - 科技感布局 */}
+          <div className="p-4 rounded-lg bg-gradient-to-r from-tech-blue/10 to-tech-purple/10 border border-tech-blue/30 backdrop-blur-sm">
             <div className="flex items-center justify-between">
-              <span className={`text-sm font-medium ${theme === "dark" ? "text-gray-200" : "text-gray-800"}`}>
+              <span className="text-sm font-semibold text-tech-blue flex items-center gap-2">
+                <div className="w-2 h-2 bg-tech-blue rounded-full animate-pulse" />
                 {currentTexts.currentParameters}:
               </span>
-              <div className={`text-sm font-mono ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
-                <span className="mr-4">-m {memoryValue}{memoryType === "percentage" ? "%" : "MB"}</span>
-                <span className="mr-4">-d {testDuration}min</span>
-                <span>{currentTexts.pollingParam}: {pollingEnabled ? `${pollingInterval}s` : 'disabled'}</span>
+              <div className="text-sm font-mono text-foreground space-x-4">
+                <span className="px-3 py-1 rounded-lg bg-tech-blue/20 text-tech-blue font-semibold">
+                  -m {memoryValue}{memoryType === "percentage" ? "%" : "MB"}
+                </span>
+                <span className="px-3 py-1 rounded-lg bg-tech-green/20 text-tech-green font-semibold">
+                  -d {testDuration}min
+                </span>
+                <span className="px-3 py-1 rounded-lg bg-tech-orange/20 text-tech-orange font-semibold">
+                  {currentTexts.pollingParam}: {pollingEnabled ? `${pollingInterval}s` : 'disabled'}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* 参数说明 - 折叠式 */}
-          <details className={`group ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
-            <summary className={`cursor-pointer text-sm font-medium ${theme === "dark" ? "text-gray-200" : "text-gray-800"} hover:underline`}>
-              {currentTexts.parameterDescription} ▼
+          {/* 参数说明 - 科技感折叠式 */}
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-semibold text-tech-cyan hover:text-tech-blue transition-colors duration-300 flex items-center gap-2 p-3 rounded-lg bg-secondary/20 hover:bg-secondary/40">
+              <div className="w-2 h-2 bg-tech-cyan rounded-full" />
+              {currentTexts.parameterDescription} 
+              <span className="transform group-open:rotate-180 transition-transform duration-300">▼</span>
             </summary>
-            <div className="mt-2 text-xs space-y-1 pl-4">
-              <p>• {currentTexts.memoryParamDesc}</p>
-              <p>• {currentTexts.durationParamDesc}</p>
-              <p>• {currentTexts.pollingParamDesc}</p>
-              <p>• {currentTexts.pollingEnableDesc}</p>
+            <div className="mt-3 p-4 rounded-lg bg-secondary/10 border border-border/30 space-y-2 text-xs font-mono">
+              <p className="text-tech-blue">• {currentTexts.memoryParamDesc}</p>
+              <p className="text-tech-green">• {currentTexts.durationParamDesc}</p>
+              <p className="text-tech-orange">• {currentTexts.pollingParamDesc}</p>
+              <p className="text-tech-purple">• {currentTexts.pollingEnableDesc}</p>
             </div>
           </details>
         </CardContent>
       </Card>
 
-      <Card className={theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}>
+      {/* 选择空闲节点卡片 */}
+      <Card className="tech-card bg-gradient-to-br from-tech-green/10 to-tech-blue/10 border-tech-green/30 shadow-glow">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>{currentTexts.selectNodes}</span>
+            <span className="text-lg font-bold bg-gradient-accent bg-clip-text text-transparent">
+              {currentTexts.selectNodes}
+            </span>
             <Button 
               variant="outline" 
               size="sm" 
               onClick={refreshIdleNodes}
               disabled={refreshDisabled || loading}
+              className="tech-button border-tech-green/50 hover:bg-tech-green/20 hover:border-tech-green"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               {refreshDisabled ? `${countdown}s` : currentTexts.refreshNodes}
             </Button>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-muted-foreground font-mono">
             {currentTexts.selected} {selectedNodes.length} {currentTexts.nodes}
             {refreshError && (
-              <div className="mt-2 text-red-500 text-sm">
+              <div className="mt-2 text-tech-red text-sm font-semibold p-2 rounded-lg bg-tech-red/10 border border-tech-red/30">
                 {refreshError}
               </div>
             )}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="flex items-center justify-between gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-tech-blue" />
               <Input
                 placeholder={currentTexts.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="tech-input pl-10"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <span className={`text-sm whitespace-nowrap ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+            <div className="flex items-center gap-3">
+              <span className="text-sm whitespace-nowrap text-tech-cyan font-semibold">
                 {currentTexts.itemsPerPage}:
               </span>
               <Select
@@ -946,10 +991,10 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
                   setCurrentPage(1)
                 }}
               >
-                <SelectTrigger className="w-20">
+                <SelectTrigger className="tech-input w-20">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="tech-card">
                   <SelectItem value="3">3</SelectItem>
                   <SelectItem value="6">6</SelectItem>
                   <SelectItem value="9">9</SelectItem>
@@ -958,14 +1003,19 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleSelectAll}>
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSelectAll}
+                className="tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
+              >
                 {selectedNodes.length === currentNodes.length ? currentTexts.deselectAll : currentTexts.selectAll}
               </Button>
               <Button
                 onClick={startBurnInTest}
                 disabled={selectedNodes.length === 0 || loading}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
+                className="tech-button bg-gradient-danger hover:shadow-glow-red disabled:opacity-50"
               >
                 <Play className={`w-4 h-4 mr-2 ${loading ? 'animate-pulse' : ''}`} />
                 {loading ? '启动中...' : currentTexts.startTest}
@@ -973,49 +1023,43 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {currentNodes.map((node) => (
               <Card
                 key={node.nodeId}
-                className={`cursor-pointer transition-all ${
+                className={`tech-card cursor-pointer transition-all duration-300 group ${
                   selectedNodes.includes(node.nodeId)
-                    ? theme === "dark"
-                      ? "bg-orange-900/30 border-orange-500"
-                      : "bg-orange-50 border-orange-300"
-                    : theme === "dark"
-                      ? "bg-gray-700 border-gray-600 hover:bg-gray-600"
-                      : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                    ? "bg-gradient-to-br from-tech-orange/20 to-tech-red/20 border-tech-orange shadow-glow-red"
+                    : "bg-gradient-to-br from-secondary/30 to-secondary/10 border-border/50 hover:border-tech-blue/50 hover:shadow-glow"
                 }`}
               >
-                <CardContent className="p-4">
+                <CardContent className="p-5">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-3 mb-4">
                         <Checkbox
                           checked={selectedNodes.includes(node.nodeId)}
                           onCheckedChange={(checked) => handleNodeSelection(node.nodeId, checked as boolean)}
+                          className="w-4 h-4 text-tech-blue accent-tech-blue"
                         />
-                        <h3 className={`font-medium ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                        <h3 className="font-bold text-lg text-foreground group-hover:text-tech-blue transition-colors">
                           {node.nodeName}
                         </h3>
                       </div>
-                      <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>{currentTexts.gpuType}:</span>
-                          <span className={theme === "dark" ? "text-gray-100" : "text-gray-900"}>{node.gpuType}</span>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between items-center p-2 rounded-lg bg-secondary/20">
+                          <span className="text-tech-cyan font-semibold">{currentTexts.gpuType}:</span>
+                          <span className="text-foreground font-mono font-bold">{node.gpuType}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>{currentTexts.gpuCount}:</span>
-                          <span className={theme === "dark" ? "text-gray-100" : "text-gray-900"}>{node.gpuCount}</span>
+                        <div className="flex justify-between items-center p-2 rounded-lg bg-secondary/20">
+                          <span className="text-tech-green font-semibold">{currentTexts.gpuCount}:</span>
+                          <span className="text-foreground font-mono font-bold">{node.gpuCount}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
+                        <div className="flex justify-between items-center p-2 rounded-lg bg-secondary/20">
+                          <span className="text-tech-purple font-semibold">
                             {currentTexts.status}:
                           </span>
-                          <Badge
-                            variant="secondary"
-                            className={theme === "dark" ? "bg-green-800 text-green-200" : "bg-green-100 text-green-800"}
-                          >
+                          <Badge className="status-idle px-3 py-1 rounded-full text-xs font-semibold">
                             {currentTexts.idle}
                           </Badge>
                         </div>
@@ -1028,21 +1072,22 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
+                className="tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue disabled:opacity-50"
               >
                 <ChevronLeft className="w-4 h-4 mr-2" />
                 {currentTexts.prevPage}
               </Button>
               <div className="flex items-center gap-4">
-                <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                <span className="text-sm text-tech-cyan font-semibold">
                   {currentTexts.page} {currentPage} {currentTexts.totalPages} {totalPages} {currentTexts.pagesUnit}
                 </span>
-                <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                <span className="text-xs text-muted-foreground font-mono">
                   ({startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredNodes.length)} / {filteredNodes.length}{" "}
                   {currentTexts.items})
                 </span>
@@ -1052,6 +1097,7 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
                 size="sm"
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
+                className="tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue disabled:opacity-50"
               >
                 {currentTexts.nextPage}
                 <ChevronRight className="w-4 h-4 ml-2" />
@@ -1062,44 +1108,61 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
       </Card>
 
       {runningTests.size > 0 && (
-        <Card className={theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}>
+        <Card className="tech-card bg-gradient-to-br from-tech-orange/10 to-tech-red/10 border-tech-orange/30 shadow-glow-red">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>{currentTexts.runningTests}</span>
-              <div className="flex items-center space-x-2">
+              <span className="text-lg font-bold bg-gradient-danger bg-clip-text text-transparent">
+                {currentTexts.runningTests}
+              </span>
+              <div className="flex items-center space-x-3">
                 {!pollingEnabled && (
-                  <Button variant="outline" size="sm" onClick={refreshBurnInStatus}>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={refreshBurnInStatus}
+                    className="tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
+                  >
                     <RefreshCw className="w-4 h-4 mr-2" />
                     {currentTexts.refreshNodes}
                   </Button>
                 )}
-                <Button variant="destructive" size="sm" onClick={stopAllTests}>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  onClick={stopAllTests}
+                  className="tech-button bg-gradient-danger hover:shadow-glow-red"
+                >
                   <Square className="w-4 h-4 mr-2" />
                   {currentTexts.stopAll}
                 </Button>
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8">
             {Array.from(runningTests.entries()).map(([nodeId, testData]) => (
-              <div key={nodeId} className="space-y-4">
+              <div key={nodeId} className="space-y-6 p-4 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className={`font-medium ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <h3 className="font-bold text-xl text-foreground mb-2">
                       {testData.nodeName}
                     </h3>
-                    <div className={`flex gap-4 text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
-                      <span className="flex items-center gap-1">
+                    <div className="flex gap-6 text-sm">
+                      <span className="flex items-center gap-2 text-tech-blue font-semibold">
                         <Activity className="w-4 h-4" />
                         {currentTexts.progress}: {testData.progress.toFixed(1)}%
                       </span>
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-2 text-tech-cyan font-semibold">
                         <Settings className="w-4 h-4" />
                         -m {memoryValue}{memoryType === "percentage" ? "%" : "MB"} -d {testDuration}min
                       </span>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => stopBurnInTest(nodeId)}>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => stopBurnInTest(nodeId)}
+                    className="tech-button border-tech-red/50 hover:bg-tech-red/20 hover:border-tech-red"
+                  >
                     <Square className="w-4 h-4 mr-2" />
                     {currentTexts.stopTest}
                   </Button>
@@ -1107,34 +1170,38 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {testData.gpus.map((gpu) => (
-                    <Card key={gpu.id} className={theme === "dark" ? "bg-gray-700" : "bg-gray-50"}>
-                      <CardContent className="p-3">
+                    <Card key={gpu.id} className="tech-card bg-gradient-to-br from-secondary/40 to-secondary/20 border-border/50 hover:border-tech-blue/50 hover:shadow-glow transition-all duration-300">
+                      <CardContent className="p-4">
                         <div className="text-center">
-                          <div className={`font-medium mb-2 ${theme === "dark" ? "text-gray-200" : "text-gray-800"}`}>
+                          <div className="font-bold mb-3 text-tech-blue text-sm">
                             {currentTexts.gpuCard} {gpu.id}
                           </div>
-                          <div className="space-y-1 text-xs">
-                            <div className="flex items-center justify-between">
-                              <Cpu className="w-3 h-3 text-blue-500" />
-                              <span className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>
+                          <div className="space-y-3 text-xs">
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-tech-blue/10">
+                              <Cpu className="w-3 h-3 text-tech-blue" />
+                              <span className="text-foreground font-mono font-bold">
                                 {gpu.activeUnits}
                               </span>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <Zap className="w-3 h-3 text-yellow-500" />
-                              <span className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-tech-yellow/10">
+                              <Zap className="w-3 h-3 text-tech-yellow" />
+                              <span className="text-foreground font-mono font-bold">
                                 {(gpu.gflops / 1000).toFixed(0)} Gflop/s
                               </span>
                             </div>
                             <div
-                              className={`flex items-center justify-between ${gpu.errors > 0 ? "text-red-500 font-bold" : "text-green-500"}`}
+                              className={`flex items-center justify-between p-2 rounded-lg ${
+                                gpu.errors > 0 
+                                  ? "bg-tech-red/20 text-tech-red font-bold" 
+                                  : "bg-tech-green/10 text-tech-green"
+                              }`}
                             >
-                              <AlertTriangle className="w-3 h-3 text-red-500" />
-                              <span>{gpu.errors}</span>
+                              <AlertTriangle className="w-3 h-3" />
+                              <span className="font-mono font-bold">{gpu.errors}</span>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <Thermometer className="w-3 h-3 text-orange-500" />
-                              <span className={theme === "dark" ? "text-gray-200" : "text-gray-700"}>
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-tech-orange/10">
+                              <Thermometer className="w-3 h-3 text-tech-orange" />
+                              <span className="text-foreground font-mono font-bold">
                                 {gpu.temperature}°C
                               </span>
                             </div>
@@ -1151,21 +1218,29 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
       )}
 
       {completedTests.length > 0 && (
-        <Card className={theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}>
+        <Card className="tech-card bg-gradient-to-br from-tech-green/10 to-tech-blue/10 border-tech-green/30 shadow-glow-green">
           <CardHeader>
-            <CardTitle>{currentTexts.completedTests}</CardTitle>
+            <CardTitle className="text-lg font-bold bg-gradient-accent bg-clip-text text-transparent">
+              {currentTexts.completedTests}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {completedTests.map((testData, index) => (
-              <div key={index} className="space-y-4">
+              <div key={index} className="space-y-4 p-4 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className={`font-medium ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <h3 className="font-bold text-xl text-foreground mb-2">
                       {testData.nodeName}
                     </h3>
-                    <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
                       {currentTexts.status}:
-                      <Badge variant={testData.status === "completed" ? "default" : "destructive"} className="ml-2">
+                      <Badge 
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          testData.status === "completed" 
+                            ? "status-running" 
+                            : "status-error"
+                        }`}
+                      >
                         {testData.status === "completed" ? currentTexts.completed : currentTexts.failed}
                       </Badge>
                     </p>
@@ -1174,24 +1249,31 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
 
                 {testData.finalResult && (
                   <div>
-                    <h4 className={`font-medium mb-2 ${theme === "dark" ? "text-gray-200" : "text-gray-800"}`}>
+                    <h4 className="font-bold mb-3 text-tech-cyan flex items-center gap-2">
+                      <div className="w-2 h-2 bg-tech-cyan rounded-full animate-pulse" />
                       {currentTexts.finalResult}:
                     </h4>
-                    <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+                    <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
                       {Object.entries(testData.finalResult).map(([gpuId, result]) => (
                         <div
                           key={gpuId}
-                          className={`flex items-center justify-center p-2 rounded border ${theme === "dark" ? "border-gray-600 bg-gray-700" : "border-gray-200 bg-gray-50"}`}
+                          className={`flex items-center justify-center p-3 rounded-lg border-2 transition-all duration-300 ${
+                            result === "OK" 
+                              ? "border-tech-green bg-tech-green/10 hover:shadow-glow-green" 
+                              : "border-tech-red bg-tech-red/10 hover:shadow-glow-red"
+                          }`}
                         >
-                          <span className={`text-xs mr-1 ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                          <span className="text-xs mr-2 text-tech-cyan font-mono font-semibold">
                             GPU {gpuId}:
                           </span>
                           {result === "OK" ? (
-                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <CheckCircle className="w-4 h-4 text-tech-green" />
                           ) : (
-                            <XCircle className="w-4 h-4 text-red-500" />
+                            <XCircle className="w-4 h-4 text-tech-red" />
                           )}
-                          <span className={`text-xs ml-1 ${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>
+                          <span className={`text-xs ml-2 font-mono font-bold ${
+                            result === "OK" ? "text-tech-green" : "text-tech-red"
+                          }`}>
                             {result}
                           </span>
                         </div>
@@ -1206,12 +1288,16 @@ export default function BurnInPage({ theme, language, t }: BurnInPageProps) {
       )}
 
       {runningTests.size === 0 && completedTests.length === 0 && (
-        <Card className={theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}>
-          <CardContent className="text-center py-12">
-            <Monitor className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <p className={`${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+        <Card className="tech-card bg-gradient-to-br from-secondary/20 to-secondary/10 border-border/50">
+          <CardContent className="text-center py-16">
+            <div className="relative">
+              <Monitor className="w-16 h-16 mx-auto mb-6 text-tech-blue animate-float" />
+              <div className="absolute inset-0 w-16 h-16 mx-auto bg-tech-blue/20 rounded-full animate-pulse-slow" />
+            </div>
+            <p className="text-muted-foreground text-lg font-mono">
               Select nodes and start burn-in test
             </p>
+            <div className="mt-4 w-32 h-1 bg-gradient-primary mx-auto rounded-full animate-glow" />
           </CardContent>
         </Card>
       )}

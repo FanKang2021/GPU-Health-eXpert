@@ -4,9 +4,17 @@ import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'GHealthX',
-  description: 'Created with v0',
+  title: 'GHealthX - GPU Health eXpert',
+  description: 'GPU集群健康监控与诊断系统',
   generator: 'v0.dev',
+  icons: {
+    icon: [
+      { url: '/logo.ico', sizes: 'any' }
+    ],
+    apple: [
+      { url: '/logo.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 }
 
 export default function RootLayout({

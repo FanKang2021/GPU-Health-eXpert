@@ -18,7 +18,6 @@ interface GpuStatusTableProps {
   pageSize: number
   onPageChange: (page: number) => void
   onPageSizeChange: (size: number) => void
-  theme: "light" | "dark"
   t: any // i18n text object
   // 状态信息相关属性
   lastRefreshTime: number
@@ -56,7 +55,6 @@ export function GpuStatusTable({
   pageSize,
   onPageChange,
   onPageSizeChange,
-  theme,
   t,
   // 状态信息相关参数
   lastRefreshTime,
@@ -100,11 +98,9 @@ export function GpuStatusTable({
   // 获取节点状态样式
   const getNodeStatusStyle = (gpuRequested: number) => {
     if (gpuRequested === 0) {
-      return theme === "dark"
-        ? "bg-green-900/20 text-green-400 border-green-500"
-        : "bg-green-50 text-green-700 border-green-500"
+      return "bg-tech-green/20 text-tech-green border-tech-green"
     } else {
-      return theme === "dark" ? "bg-red-900/20 text-red-400 border-red-500" : "bg-red-50 text-red-700 border-red-500"
+      return "bg-tech-red/20 text-tech-red border-tech-red"
     }
   }
 
@@ -220,20 +216,16 @@ export function GpuStatusTable({
   }
 
   return (
-    <Card
-      className={`mt-6 transition-colors duration-200 ${
-        theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-      }`}
-    >
+    <Card className="mt-6 transition-colors duration-200 tech-card bg-gradient-to-br from-secondary/20 to-secondary/10 border-border/50 shadow-glow">
       <CardHeader>
         <div className="space-y-4">
           {/* 主标题和描述 */}
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className={`text-xl ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <CardTitle className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                 {t.gpuNodeStatus}
               </CardTitle>
-              <CardDescription className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
+              <CardDescription className="text-muted-foreground font-mono">
                 {t.gpuNodeStatusDesc}
               </CardDescription>
             </div>
@@ -244,10 +236,10 @@ export function GpuStatusTable({
             <div className="flex items-center space-x-4">
               {/* 最后刷新时间 */}
               <div className="flex items-center space-x-2">
-                <span className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                <span className="text-sm text-muted-foreground font-mono">
                   {t.lastRefresh}:
                 </span>
-                <span className={`text-sm font-mono ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                <span className="text-sm font-mono text-foreground">
                   {lastRefreshTime > 0 
                     ? new Date(lastRefreshTime).toLocaleString("zh-CN", {
                         year: 'numeric',
@@ -274,9 +266,7 @@ export function GpuStatusTable({
                 
                 {/* 数据数量显示 */}
                 {gpuNodeStatus.length > 0 && (
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-700"
-                  }`}>
+                  <span className="text-xs px-2 py-1 rounded-full bg-secondary/30 text-muted-foreground font-mono">
                     {gpuNodeStatus.length} {t.nodes}
                   </span>
                 )}
@@ -285,18 +275,14 @@ export function GpuStatusTable({
               {/* 刷新状态指示器 */}
               <div className="flex items-center space-x-2">
                 {gpuStatusRefreshDisabled ? (
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    theme === "dark" ? "bg-blue-900/20 text-blue-400" : "bg-blue-100 text-blue-800"
-                  }`}>
+                  <span className="text-xs px-2 py-1 rounded-full bg-tech-blue/20 text-tech-blue font-mono">
                     {nextRefreshTime > 0 
                       ? `${t.waiting} (${gpuStatusCountdown}s)`
                       : `${t.cooling} (${gpuStatusCountdown}s)`
                     }
                   </span>
                 ) : (
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    theme === "dark" ? "bg-green-900/20 text-green-400" : "bg-green-100 text-green-800"
-                  }`}>
+                  <span className="text-xs px-2 py-1 rounded-full bg-tech-green/20 text-tech-green font-mono">
                     {t.refreshable}
                   </span>
                 )}
@@ -305,10 +291,10 @@ export function GpuStatusTable({
               {/* 刷新尝试次数 */}
               {refreshAttempts > 0 && (
                 <div className="flex items-center space-x-2">
-                  <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                  <span className="text-xs text-muted-foreground font-mono">
                     {t.refreshAttempts}:
                   </span>
-                  <span className={`text-xs font-mono ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  <span className="text-xs font-mono text-foreground">
                     {refreshAttempts}
                   </span>
                 </div>
@@ -318,7 +304,7 @@ export function GpuStatusTable({
             <div className="flex items-center space-x-3">
               {/* 自动刷新开关 */}
               <div className="flex items-center space-x-2">
-                <span className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                <span className="text-sm text-muted-foreground font-mono">
                   {t.autoRefresh}:
                 </span>
                 <Button
@@ -327,10 +313,8 @@ export function GpuStatusTable({
                   onClick={onAutoRefreshToggle}
                   className={`text-xs ${
                     autoRefreshEnabled
-                      ? "bg-blue-600 text-white"
-                      : theme === "dark"
-                        ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                        : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
+                      ? "tech-button bg-gradient-primary text-white"
+                      : "tech-button border-tech-blue/50 hover:bg-tech-blue/20"
                   }`}
                 >
                   {autoRefreshEnabled ? t.on : t.off}
@@ -340,23 +324,23 @@ export function GpuStatusTable({
               {/* 刷新状态指示器 */}
               {autoRefreshEnabled && refreshState && (
                 <div className="flex items-center space-x-2">
-                  <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                  <span className="text-xs text-muted-foreground font-mono">
                     刷新状态:
                   </span>
                   <div className={`px-2 py-1 rounded text-xs ${
                     refreshState.isRefreshing
-                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
-                      : "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                      ? "bg-tech-yellow/20 text-tech-yellow"
+                      : "bg-tech-green/20 text-tech-green"
                   }`}>
                     {refreshState.isRefreshing ? "刷新中..." : "就绪"}
                   </div>
                   {getNextRefreshTimeDisplay && (
-                    <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                    <span className="text-xs text-muted-foreground font-mono">
                       下次: {getNextRefreshTimeDisplay()}
                     </span>
                   )}
                   {getCurrentRefreshIntervalDisplay && (
-                    <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                    <span className="text-xs text-muted-foreground font-mono">
                       {getCurrentRefreshIntervalDisplay()}
                     </span>
                   )}
@@ -386,10 +370,8 @@ export function GpuStatusTable({
           
           {/* 错误信息显示 */}
           {refreshError && (
-            <div className={`p-3 rounded-md border-2 border-red-200 ${
-              theme === "dark" ? "bg-red-900/20 border-red-700" : "bg-red-50"
-            }`}>
-              <div className="flex items-center text-red-800 dark:text-red-400">
+            <div className="p-3 rounded-md border-2 border-tech-red/30 bg-tech-red/10">
+              <div className="flex items-center text-tech-red">
                 <span className="text-sm">
                   {refreshError}
                 </span>
@@ -399,10 +381,8 @@ export function GpuStatusTable({
           
           {/* 页面状态提示 */}
           {!hasInitialized && (
-            <div className={`p-3 rounded-md border-2 border-blue-200 ${
-              theme === "dark" ? "bg-blue-900/20 border-blue-700" : "bg-blue-50"
-            }`}>
-              <div className="flex items-center text-blue-800 dark:text-blue-400">
+            <div className="p-3 rounded-md border-2 border-tech-blue/30 bg-tech-blue/10">
+              <div className="flex items-center text-tech-blue">
                 <span className="text-sm">
                   ℹ️ {t.pageInitialized}
                 </span>
@@ -412,10 +392,8 @@ export function GpuStatusTable({
           
           {/* 下次刷新时间提示 */}
           {nextRefreshTime > 0 && (
-            <div className={`p-2 rounded-md border-2 border-blue-200 ${
-              theme === "dark" ? "bg-blue-900/20 border-blue-700" : "bg-blue-50"
-            }`}>
-              <div className="flex items-center text-blue-800 dark:text-blue-400">
+            <div className="p-2 rounded-md border-2 border-tech-blue/30 bg-tech-blue/10">
+              <div className="flex items-center text-tech-blue">
                 <span className="text-sm">
                   📅 {t.nextRefreshTime}: {new Date(nextRefreshTime).toLocaleString("zh-CN", {
                     year: 'numeric',
@@ -437,32 +415,24 @@ export function GpuStatusTable({
             placeholder={t.searchPlaceholder}
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className={`max-w-sm mb-4 ${
-              theme === "dark" ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400" : ""
-            }`}
+            className="tech-input max-w-sm mb-4"
           />
         </div>
-        <div
-          className={`rounded-md border overflow-x-auto transition-colors duration-200 ${
-            theme === "dark" ? "border-gray-700" : "border-gray-200"
-          }`}
-        >
+        <div className="rounded-md border overflow-x-auto transition-colors duration-200 border-border/50 bg-secondary/20 backdrop-blur-sm">
           <Table>
             <TableHeader>
-              <TableRow className={theme === "dark" ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-50"}>
-                <TableHead className={`font-semibold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <TableRow className="bg-secondary/50 hover:bg-secondary/70">
+                <TableHead className="font-semibold text-tech-blue">
                   {t.hostName}
                 </TableHead>
-                <TableHead className={`font-semibold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                <TableHead className="font-semibold text-tech-green">
                   {t.gpuType}
                 </TableHead>
-                <TableHead className={`font-semibold text-center ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                <TableHead className="font-semibold text-center text-tech-yellow">
                   {t.gpuRequested}
                 </TableHead>
                 <TableHead
-                  className={`font-semibold text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
-                  }`}
+                  className="font-semibold text-center cursor-pointer hover:bg-secondary/60 transition-colors duration-200 text-tech-orange"
                   onClick={() => onSort("nodeStatus")}
                   title={sortField === "nodeStatus" ? (sortDirection === "asc" ? t.sortDesc : t.sortAsc) : t.sortAsc}
                 >
@@ -506,15 +476,15 @@ export function GpuStatusTable({
                 paginatedData.map((node, index) => (
                   <TableRow
                     key={index}
-                    className={theme === "dark" ? "hover:bg-gray-700 border-gray-700" : "hover:bg-gray-50"}
+                    className="hover:bg-secondary/30 border-border/50 transition-colors duration-200"
                   >
-                    <TableCell className={`font-medium ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <TableCell className="font-medium text-foreground">
                       {node.nodeName || node.hostname}
                     </TableCell>
-                    <TableCell className={theme === "dark" ? "text-white" : "text-gray-900"}>
+                    <TableCell className="text-foreground">
                       {getGpuTypeDisplayName(node.gpuModel || "")}
                     </TableCell>
-                    <TableCell className={`text-center font-mono ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <TableCell className="text-center font-mono text-foreground">
                       {node.gpuRequested || 0}
                     </TableCell>
                     <TableCell className="text-center">
@@ -532,20 +502,18 @@ export function GpuStatusTable({
         {/* 分页控件 */}
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+            <div className="text-sm text-muted-foreground font-mono">
               {t.showing} {startIndex + 1}-{Math.min(endIndex, sortedData.length)} {t.of} {sortedData.length}{" "}
               {t.records}
             </div>
             <div className="flex items-center space-x-2">
-              <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+              <span className="text-sm text-muted-foreground font-mono">
                 {t.showPerPage}:
               </span>
               <select
                 value={pageSize}
                 onChange={(e) => onPageSizeChange(Number(e.target.value))}
-                className={`border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 ${
-                  theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "border-gray-300 bg-white text-gray-700"
-                }`}
+                className="tech-input border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-tech-blue transition-colors duration-200"
               >
                 <option value={10}>10 {t.rows}</option>
                 <option value={20}>20 {t.rows}</option>
@@ -559,11 +527,7 @@ export function GpuStatusTable({
               size="sm"
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className={`px-3 py-1 ${
-                theme === "dark"
-                  ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-              }`}
+              className="tech-button px-3 py-1"
             >
               {t.previousPage}
             </Button>
@@ -573,7 +537,7 @@ export function GpuStatusTable({
                 pageInfo.type === "ellipsis" ? (
                   <span
                     key={`ellipsis-${index}`}
-                    className={`px-2 py-1 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}
+                    className="px-2 py-1 text-muted-foreground"
                   >
                     ...
                   </span>
@@ -584,9 +548,9 @@ export function GpuStatusTable({
                     size="sm"
                     onClick={() => onPageChange(pageInfo.page)}
                     className={`w-8 h-8 ${
-                      currentPage !== pageInfo.page && theme === "dark"
-                        ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                        : ""
+                      currentPage === pageInfo.page
+                        ? "tech-button bg-gradient-primary text-white"
+                        : "tech-button border-tech-blue/50 hover:bg-tech-blue/20"
                     }`}
                   >
                     {pageInfo.page}
@@ -600,11 +564,7 @@ export function GpuStatusTable({
               size="sm"
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className={`px-3 py-1 ${
-                theme === "dark"
-                  ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-              }`}
+              className="tech-button px-3 py-1"
             >
               {t.nextPage}
             </Button>

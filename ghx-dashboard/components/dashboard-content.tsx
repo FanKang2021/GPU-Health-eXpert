@@ -12,7 +12,6 @@ import { NodeDetailsTable } from "@/components/node-details-table"
 import { Badge } from "@/components/ui/badge"
 
 interface DashboardContentProps {
-  theme: "light" | "dark"
   language: "zh" | "en"
   t: any
 }
@@ -46,7 +45,7 @@ const mockData = [
   },
 ]
 
-export function DashboardContent({ theme, language, t }: DashboardContentProps) {
+export function DashboardContent({ language, t }: DashboardContentProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
@@ -514,19 +513,15 @@ ${log.executionLog || '无日志'}
 
   return (
     <>
-      <SummaryCards summary={summary} theme={theme} t={t} />
+      <SummaryCards summary={summary} t={t} />
 
       {/* 错误提示 */}
       {error && (
-        <Card
-          className={`mb-6 border-red-200 transition-colors duration-200 ${
-            theme === "dark" ? "bg-red-900/20 border-red-700" : "bg-red-50"
-          }`}
-        >
+        <Card className="tech-card mb-6 bg-gradient-to-r from-tech-red/10 to-tech-red/5 border-tech-red/30 shadow-glow-red">
           <CardContent className="pt-6">
-            <div className="flex items-center text-red-800 dark:text-red-400">
+            <div className="flex items-center text-tech-red">
               <XCircle className="w-5 h-5 mr-2" />
-              <span>
+              <span className="font-semibold">
                 {t.error}: {error}
               </span>
             </div>
@@ -551,7 +546,6 @@ ${log.executionLog || '无日志'}
         onViewLog={handleViewLog}
         refreshDisabled={inspectionRefreshDisabled}
         countdown={inspectionCountdown}
-        theme={theme}
         t={t}
         gpuBenchmarks={gpuBenchmarks}
         getFinalResult={getFinalResult}
@@ -559,18 +553,14 @@ ${log.executionLog || '无日志'}
       />
 
       {/* 检查项目描述 */}
-      <Card
-        className={`mt-6 transition-colors duration-200 ${
-          theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        }`}
-      >
+      <Card className="tech-card mt-6 bg-gradient-to-br from-tech-blue/10 to-tech-cyan/10 border-tech-blue/30 shadow-glow">
         <CardHeader>
-          <CardTitle className={`text-xl ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+          <CardTitle className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
             {t.checkItemsDesc}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className={`space-y-4 text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+          <div className="space-y-4 text-sm text-foreground">
             <div>
               <strong>bandwidthTest:</strong> {t.bandwidthTestDesc}
             </div>
@@ -585,115 +575,113 @@ ${log.executionLog || '无日志'}
               
               {/* DCGM诊断级别详细说明表格 */}
               <div className="mt-3">
-                <p className={`text-xs mb-2 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                <p className="text-xs mb-2 text-muted-foreground">
                   {t.dcgmLevelDescription}
                 </p>
-                <div className={`rounded-md border overflow-x-auto transition-colors duration-200 ${
-                  theme === "dark" ? "border-gray-700" : "border-gray-200"
-                }`}>
-                  <table className={`w-full text-xs ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                <div className="rounded-md border border-border/50 overflow-x-auto transition-colors duration-200 bg-secondary/20 backdrop-blur-sm">
+                  <table className="tech-table w-full text-xs text-foreground">
                     <thead>
-                      <tr className={theme === "dark" ? "bg-gray-700" : "bg-gray-50"}>
-                        <th className={`p-2 text-left border-b ${theme === "dark" ? "border-gray-600" : "border-gray-200"}`}>
+                      <tr className="bg-secondary/50">
+                        <th className="p-2 text-left border-b border-border/50 text-tech-blue font-semibold">
                           Plugin
                         </th>
-                        <th className={`p-2 text-left border-b ${theme === "dark" ? "border-gray-600" : "border-gray-200"}`}>
+                        <th className="p-2 text-left border-b border-border/50 text-tech-blue font-semibold">
                           Test name
                         </th>
-                        <th className={`p-2 text-center border-b ${theme === "dark" ? "border-gray-600" : "border-gray-200"}`}>
+                        <th className="p-2 text-center border-b border-border/50 text-tech-green font-semibold">
                           r1 (Short)<br/>Seconds
                         </th>
-                        <th className={`p-2 text-center border-b ${theme === "dark" ? "border-gray-600" : "border-gray-200"}`}>
+                        <th className="p-2 text-center border-b border-border/50 text-tech-yellow font-semibold">
                           r2 (Medium)<br/>&lt;2 mins
                         </th>
-                        <th className={`p-2 text-center border-b ${theme === "dark" ? "border-gray-600" : "border-gray-200"}`}>
+                        <th className="p-2 text-center border-b border-border/50 text-tech-orange font-semibold">
                           r3 (Long)<br/>&lt;30 mins
                         </th>
-                        <th className={`p-2 text-center border-b ${theme === "dark" ? "border-gray-600" : "border-gray-200"}`}>
+                        <th className="p-2 text-center border-b border-border/50 text-tech-red font-semibold">
                           r4 (Extra Long)<br/>1-2 hours
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr className={theme === "dark" ? "border-gray-600" : "border-gray-200"}>
-                        <td className="p-2 border-b">Software</td>
-                        <td className="p-2 border-b">software</td>
-                        <td className="p-2 border-b text-center">Yes</td>
-                        <td className="p-2 border-b text-center">Yes</td>
-                        <td className="p-2 border-b text-center">Yes</td>
-                        <td className="p-2 border-b text-center">Yes</td>
+                      <tr className="hover:bg-secondary/30 transition-colors duration-200">
+                        <td className="p-2 border-b border-border/50">Software</td>
+                        <td className="p-2 border-b border-border/50">software</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
                       </tr>
-                      <tr className={theme === "dark" ? "border-gray-600" : "border-gray-200"}>
-                        <td className="p-2 border-b">PCIe + NVLink</td>
-                        <td className="p-2 border-b">pcie</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">Yes</td>
-                        <td className="p-2 border-b text-center">Yes</td>
-                        <td className="p-2 border-b text-center">Yes</td>
+                      <tr className="hover:bg-secondary/30 transition-colors duration-200">
+                        <td className="p-2 border-b border-border/50">PCIe + NVLink</td>
+                        <td className="p-2 border-b border-border/50">pcie</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
                       </tr>
-                      <tr className={theme === "dark" ? "border-gray-600" : "border-gray-200"}>
-                        <td className="p-2 border-b">GPU Memory</td>
-                        <td className="p-2 border-b">memory</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">Yes</td>
-                        <td className="p-2 border-b text-center">Yes</td>
-                        <td className="p-2 border-b text-center">Yes</td>
+                      <tr className="hover:bg-secondary/30 transition-colors duration-200">
+                        <td className="p-2 border-b border-border/50">GPU Memory</td>
+                        <td className="p-2 border-b border-border/50">memory</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
                       </tr>
-                      <tr className={theme === "dark" ? "border-gray-600" : "border-gray-200"}>
-                        <td className="p-2 border-b">Memory Bandwidth</td>
-                        <td className="p-2 border-b">memory_bandwidth</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">Yes</td>
-                        <td className="p-2 border-b text-center">Yes</td>
-                        <td className="p-2 border-b text-center">Yes</td>
+                      <tr className="hover:bg-secondary/30 transition-colors duration-200">
+                        <td className="p-2 border-b border-border/50">Memory Bandwidth</td>
+                        <td className="p-2 border-b border-border/50">memory_bandwidth</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
                       </tr>
-                      <tr className={theme === "dark" ? "border-gray-600" : "border-gray-200"}>
-                        <td className="p-2 border-b">Diagnostics</td>
-                        <td className="p-2 border-b">diagnostic</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">Yes</td>
-                        <td className="p-2 border-b text-center">Yes</td>
+                      <tr className="hover:bg-secondary/30 transition-colors duration-200">
+                        <td className="p-2 border-b border-border/50">Diagnostics</td>
+                        <td className="p-2 border-b border-border/50">diagnostic</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
                       </tr>
-                      <tr className={theme === "dark" ? "border-gray-600" : "border-gray-200"}>
-                        <td className="p-2 border-b">Targeted Stress</td>
-                        <td className="p-2 border-b">targeted_stress</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">Yes</td>
-                        <td className="p-2 border-b text-center">Yes</td>
+                      <tr className="hover:bg-secondary/30 transition-colors duration-200">
+                        <td className="p-2 border-b border-border/50">Targeted Stress</td>
+                        <td className="p-2 border-b border-border/50">targeted_stress</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
                       </tr>
-                      <tr className={theme === "dark" ? "border-gray-600" : "border-gray-200"}>
-                        <td className="p-2 border-b">Targeted Power</td>
-                        <td className="p-2 border-b">targeted_power</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">Yes</td>
-                        <td className="p-2 border-b text-center">Yes</td>
+                      <tr className="hover:bg-secondary/30 transition-colors duration-200">
+                        <td className="p-2 border-b border-border/50">Targeted Power</td>
+                        <td className="p-2 border-b border-border/50">targeted_power</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
                       </tr>
-                      <tr className={theme === "dark" ? "border-gray-600" : "border-gray-200"}>
-                        <td className="p-2 border-b">NVBandwidth</td>
-                        <td className="p-2 border-b">nvbandwidth</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">Yes</td>
-                        <td className="p-2 border-b text-center">Yes</td>
+                      <tr className="hover:bg-secondary/30 transition-colors duration-200">
+                        <td className="p-2 border-b border-border/50">NVBandwidth</td>
+                        <td className="p-2 border-b border-border/50">nvbandwidth</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
                       </tr>
-                      <tr className={theme === "dark" ? "border-gray-600" : "border-gray-200"}>
-                        <td className="p-2 border-b">Memory Stress</td>
-                        <td className="p-2 border-b">memtest</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">Yes</td>
+                      <tr className="hover:bg-secondary/30 transition-colors duration-200">
+                        <td className="p-2 border-b border-border/50">Memory Stress</td>
+                        <td className="p-2 border-b border-border/50">memtest</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
                       </tr>
-                      <tr className={theme === "dark" ? "border-gray-600" : "border-gray-200"}>
-                        <td className="p-2 border-b">Input EDPp</td>
-                        <td className="p-2 border-b">pulse</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">-</td>
-                        <td className="p-2 border-b text-center">Yes</td>
+                      <tr className="hover:bg-secondary/30 transition-colors duration-200">
+                        <td className="p-2 border-b border-border/50">Input EDPp</td>
+                        <td className="p-2 border-b border-border/50">pulse</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-muted-foreground">-</td>
+                        <td className="p-2 border-b border-border/50 text-center text-tech-green font-semibold">Yes</td>
                       </tr>
                     </tbody>
                   </table>
@@ -711,43 +699,27 @@ ${log.executionLog || '无日志'}
       </Card>
 
       {/* GPU性能基准值对照表 */}
-      <Card
-        className={`mt-6 transition-colors duration-200 ${
-          theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        }`}
-      >
+      <Card className="tech-card mt-6 bg-gradient-to-br from-tech-purple/10 to-tech-blue/10 border-tech-purple/30 shadow-glow">
         <CardHeader>
-          <CardTitle className={`text-xl ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+          <CardTitle className="text-xl font-bold bg-gradient-to-r from-tech-purple to-tech-blue bg-clip-text text-transparent">
             {t.gpuBenchmarks}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div
-            className={`rounded-md border overflow-x-auto transition-colors duration-200 ${
-              theme === "dark" ? "border-gray-700" : "border-gray-200"
-            }`}
-          >
+          <div className="rounded-md border border-border/50 overflow-x-auto transition-colors duration-200 bg-secondary/20 backdrop-blur-sm">
             <Table>
               <TableHeader>
-                <TableRow className={theme === "dark" ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-50"}>
-                  <TableHead
-                    className={`font-semibold text-center ${theme === "dark" ? "text-white" : "text-gray-900"}`}
-                  >
+                <TableRow className="bg-secondary/50 hover:bg-secondary/70 transition-colors duration-200">
+                  <TableHead className="font-semibold text-center text-tech-blue">
                     {t.gpuModel}
                   </TableHead>
-                  <TableHead
-                    className={`font-semibold text-center ${theme === "dark" ? "text-white" : "text-gray-900"}`}
-                  >
+                  <TableHead className="font-semibold text-center text-tech-green">
                     P2PBandwidthLatencyTest
                   </TableHead>
-                  <TableHead
-                    className={`font-semibold text-center ${theme === "dark" ? "text-white" : "text-gray-900"}`}
-                  >
+                  <TableHead className="font-semibold text-center text-tech-yellow">
                     NCCL_Tests
                   </TableHead>
-                  <TableHead
-                    className={`font-semibold text-center ${theme === "dark" ? "text-white" : "text-gray-900"}`}
-                  >
+                  <TableHead className="font-semibold text-center text-tech-orange">
                     BandwidthTest
                   </TableHead>
                 </TableRow>
@@ -760,40 +732,32 @@ ${log.executionLog || '无日志'}
                       key={gpuType}
                       className={`${
                         usedGpuTypes.includes(gpuType)
-                          ? theme === "dark"
-                            ? "bg-blue-900/30 border-l-4 border-l-blue-400 bg-gradient-to-r from-blue-900/20 to-blue-800/10"
-                            : "bg-blue-50 border-l-4 border-l-blue-500"
-                          : theme === "dark"
-                            ? "hover:bg-gray-700"
-                            : "hover:bg-gray-50"
+                          ? "bg-tech-blue/20 border-l-4 border-l-tech-blue bg-gradient-to-r from-tech-blue/10 to-tech-blue/5"
+                          : "hover:bg-secondary/30"
                       } transition-colors duration-200`}
                     >
-                      <TableCell
-                        className={`font-medium text-center ${theme === "dark" ? "text-white" : "text-gray-900"}`}
-                      >
+                      <TableCell className="font-bold text-center text-foreground">
                         {gpuType}
                       </TableCell>
-                      <TableCell className={`text-center font-mono ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{benchmark.p2p}</TableCell>
-                      <TableCell className={`text-center font-mono ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{benchmark.nccl}</TableCell>
-                      <TableCell className={`text-center font-mono ${theme === "dark" ? "text-white" : "text-gray-900"}`}>{benchmark.bw}</TableCell>
+                      <TableCell className="text-center font-mono text-tech-green font-semibold">{benchmark.p2p}</TableCell>
+                      <TableCell className="text-center font-mono text-tech-yellow font-semibold">{benchmark.nccl}</TableCell>
+                      <TableCell className="text-center font-mono text-tech-orange font-semibold">{benchmark.bw}</TableCell>
                     </TableRow>
                   )
                 })}
               </TableBody>
             </Table>
           </div>
-          <p className={`text-xs mt-4 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>{t.benchmarkNote}</p>
+          <p className="text-xs mt-4 text-muted-foreground font-mono">{t.benchmarkNote}</p>
         </CardContent>
       </Card>
 
       {/* 执行日志查看对话框 */}
       <Dialog open={isLogDialogOpen} onOpenChange={setIsLogDialogOpen}>
-        <DialogContent
-          className={`max-w-5xl max-h-[90vh] ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white"}`}
-        >
+        <DialogContent className="tech-card max-w-5xl max-h-[90vh] bg-gradient-to-br from-secondary/20 to-secondary/10 border-border/50 shadow-glow">
           <DialogHeader>
-            <DialogTitle className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.logTitle}</DialogTitle>
-            <DialogDescription className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
+            <DialogTitle className="text-foreground font-bold text-xl">{t.logTitle}</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
               {t.logDesc}
             </DialogDescription>
           </DialogHeader>
@@ -801,60 +765,50 @@ ${log.executionLog || '无日志'}
             {selectedLog && (
               <>
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className={`font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                  <div className="p-3 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
+                    <span className="font-semibold text-tech-blue">
                       {t.hostName}:
                     </span>
-                    <span className={`ml-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <span className="ml-2 text-foreground font-mono">
                       {selectedLog.nodeName || selectedLog.hostname}
                     </span>
                   </div>
-                  <div>
-                    <span className={`font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                  <div className="p-3 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
+                    <span className="font-semibold text-tech-green">
                       {t.gpuType}:
                     </span>
-                    <span className={`ml-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <span className="ml-2 text-foreground font-mono">
                       {selectedLog.gpuType}
                     </span>
                   </div>
-                  <div>
-                    <span className={`font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                  <div className="p-3 rounded-lg bg-secondary/20 backdrop-blur-sm border border-border/50">
+                    <span className="font-semibold text-tech-orange">
                       {t.completionTime || "完成时间"}:
                     </span>
-                    <span className={`ml-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <span className="ml-2 text-foreground font-mono">
                       {formatExecutionTime(calculateCompletionTime(selectedLog.createdAt, selectedLog.executionTime) || 'N/A')}
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className={`font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                    <span className="font-semibold text-tech-cyan">
                       {t.executionLog}:
                     </span>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleExportLog(selectedLog)}
-                      className={`${
-                        theme === "dark"
-                          ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                      }`}
+                      className="tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                     >
                       <Download className="w-4 h-4 mr-1" />
                       {t.exportLog}
                     </Button>
                   </div>
 
-                  <ScrollArea
-                    className={`h-80 w-full rounded-md border p-4 ${
-                      theme === "dark" ? "border-gray-600 bg-gray-700" : "border-gray-300 bg-gray-50"
-                    }`}
-                  >
-                    <pre
-                      className={`text-sm whitespace-pre-wrap ${theme === "dark" ? "text-gray-200" : "text-gray-800"}`}
-                    >
+                  <ScrollArea className="h-80 w-full rounded-lg border border-border/50 p-4 bg-secondary/20 backdrop-blur-sm">
+                    <pre className="text-sm whitespace-pre-wrap text-foreground font-mono">
                       {selectedLog.executionLog || t.noLog}
                     </pre>
                   </ScrollArea>

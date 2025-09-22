@@ -1,51 +1,58 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@custom-variant dark (&:is(.dark *));
-
+/* 科技感酷炫主题 - 统一设计 */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --radius: 0.5rem;
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.5 0.25 240);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
+  /* 主背景 - 深色科技感 */
+  --background: #0a0a0f;
+  --foreground: #e2e8f0;
+  
+  /* 卡片背景 - 半透明深色 */
+  --card: rgba(15, 23, 42, 0.8);
+  --card-foreground: #e2e8f0;
+  
+  /* 弹出层 */
+  --popover: rgba(15, 23, 42, 0.95);
+  --popover-foreground: #e2e8f0;
+  
+  /* 主色调 - 科技蓝 */
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  
+  /* 次要色调 - 科技紫 */
+  --secondary: rgba(59, 130, 246, 0.1);
+  --secondary-foreground: #60a5fa;
+  
+  /* 静音色调 */
+  --muted: rgba(30, 41, 59, 0.6);
+  --muted-foreground: #94a3b8;
+  
+  /* 强调色 - 科技绿 */
+  --accent: rgba(34, 197, 94, 0.1);
+  --accent-foreground: #22c55e;
+  
+  /* 危险色 - 科技红 */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  
+  /* 边框和输入框 */
+  --border: rgba(59, 130, 246, 0.2);
+  --input: rgba(30, 41, 59, 0.8);
+  --ring: #3b82f6;
+  
+  /* 圆角 */
+  --radius: 0.75rem;
+  
+  /* 科技感渐变色 */
+  --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  --gradient-secondary: linear-gradient(135deg, #06b6d4, #3b82f6);
+  --gradient-accent: linear-gradient(135deg, #22c55e, #10b981);
+  --gradient-danger: linear-gradient(135deg, #ef4444, #dc2626);
+  
+  /* 科技感阴影 */
+  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.3);
+  --shadow-glow-green: 0 0 20px rgba(34, 197, 94, 0.3);
+  --shadow-glow-red: 0 0 20px rgba(239, 68, 68, 0.3);
 }
 
 @theme inline {
@@ -77,30 +84,230 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
+  
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(135deg, #0a0a0f 0%, #1e1b4b 50%, #0a0a0f 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  
+  /* 科技感背景动画 */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(34, 197, 94, 0.05) 0%, transparent 50%);
+    animation: backgroundShift 20s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  @keyframes backgroundShift {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
   }
 }
 
-/* 暗色模式下的表格样式 */
-.dark .table {
-  border-color: rgb(55 65 81);
+/* 科技感卡片样式 */
+.tech-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    var(--shadow-glow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.dark .table th,
-.dark .table td {
-  border-color: rgb(55 65 81);
+.tech-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05),
+    var(--shadow-glow);
 }
 
-/* 暗色模式下的输入框样式 */
-.dark input::placeholder {
-  color: rgb(156 163 175);
+/* 科技感按钮样式 */
+.tech-button {
+  background: var(--gradient-primary);
+  border: none;
+  border-radius: var(--radius);
+  color: var(--primary-foreground);
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-/* 暗色模式下的选择框样式 */
-.dark select option {
-  background-color: rgb(55 65 81);
-  color: rgb(255 255 255);
+.tech-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.tech-button:hover::before {
+  left: 100%;
+}
+
+.tech-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
+}
+
+/* 科技感输入框样式 */
+.tech-input {
+  background: var(--input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--foreground);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tech-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+.tech-input::placeholder {
+  color: var(--muted-foreground);
+}
+
+/* 科技感状态指示器 */
+.status-running {
+  background: var(--gradient-accent);
+  color: white;
+  box-shadow: var(--shadow-glow-green);
+  animation: pulse 2s infinite;
+}
+
+.status-error {
+  background: var(--gradient-danger);
+  color: white;
+  box-shadow: var(--shadow-glow-red);
+}
+
+.status-idle {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+/* 科技感动画 */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: var(--shadow-glow); }
+  50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.5); }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes background-shift {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+}
+
+.animate-background-shift {
+  animation: background-shift 20s ease-in-out infinite;
+}
+
+/* 科技感滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gradient-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* 科技感表格样式 */
+.tech-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.tech-table th,
+.tech-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  text-align: left;
+}
+
+.tech-table th {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  font-weight: 600;
+}
+
+.tech-table tr:hover {
+  background: var(--muted);
+}
+
+/* 科技感选择框样式 */
+.tech-select option {
+  background: var(--popover);
+  color: var(--popover-foreground);
 }

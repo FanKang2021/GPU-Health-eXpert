@@ -23,7 +23,6 @@ interface NodeDetailsTableProps {
   onViewLog: (node: any) => void
   refreshDisabled: boolean
   countdown: number
-  theme: "light" | "dark"
   t: any // i18n text object
   gpuBenchmarks: any
   getFinalResult: (item: any) => string
@@ -47,7 +46,6 @@ export function NodeDetailsTable({
   onViewLog,
   refreshDisabled,
   countdown,
-  theme,
   t,
   gpuBenchmarks,
   getFinalResult,
@@ -64,12 +62,12 @@ export function NodeDetailsTable({
   // 状态徽章组件
   const StatusBadge = ({ status }: { status: string }) => {
     return status === "Pass" ? (
-      <Badge className="bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400">
+      <Badge className="status-running">
         <CheckCircle className="w-3 h-3 mr-1" />
         {t.pass}
       </Badge>
     ) : (
-      <Badge variant="destructive" className="dark:bg-red-900/20 dark:text-red-400">
+      <Badge className="status-error">
         <XCircle className="w-3 h-3 mr-1" />
         {t.noPass}
       </Badge>
@@ -87,7 +85,7 @@ export function NodeDetailsTable({
     testType: "bw" | "p2p" | "nccl"
   }) => {
     const benchmark = gpuBenchmarks[gpuType as keyof typeof gpuBenchmarks]
-    if (!benchmark) return <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{value}</span>
+    if (!benchmark) return <span className="text-foreground">{value}</span>
 
     const numericValue = parseValue(value)
     const benchmarkValue = benchmark[testType]
@@ -95,11 +93,11 @@ export function NodeDetailsTable({
 
     return (
       <div className="flex items-center space-x-2">
-        <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{value}</span>
-        <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+        <span className="text-foreground">{value}</span>
+        <span className="text-xs text-muted-foreground font-mono">
           ({t.benchmarkValue}: {benchmarkValue} GB/s)
         </span>
-        {isPass ? <CheckCircle className="w-4 h-4 text-green-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
+        {isPass ? <CheckCircle className="w-4 h-4 text-tech-green" /> : <XCircle className="w-4 h-4 text-tech-red" />}
       </div>
     )
   }
@@ -307,16 +305,12 @@ export function NodeDetailsTable({
   }
 
   return (
-    <Card
-      className={`transition-colors duration-200 ${
-        theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-      }`}
-    >
+    <Card className="tech-card bg-gradient-to-br from-secondary/20 to-secondary/10 border-border/50 shadow-glow">
       <CardHeader>
-        <CardTitle className={`text-xl ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+        <CardTitle className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
           {t.nodeDetails}
         </CardTitle>
-        <CardDescription className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
+        <CardDescription className="text-muted-foreground font-mono">
           {t.nodeDetailsDesc}
         </CardDescription>
       </CardHeader>
@@ -327,9 +321,7 @@ export function NodeDetailsTable({
               placeholder={t.searchPlaceholder}
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className={`max-w-sm ${
-                theme === "dark" ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400" : ""
-              }`}
+              className="tech-input max-w-sm"
             />
             <div className="flex items-center space-x-2">
               <Button
@@ -337,11 +329,7 @@ export function NodeDetailsTable({
                 size="sm"
                 onClick={onRefresh}
                 disabled={refreshDisabled || loading}
-                className={`transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 ${
-                  refreshDisabled
-                    ? "bg-gray-400 cursor-not-allowed text-white"
-                    : "bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg"
-                }`}
+                className="tech-button transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : "transition-transform duration-300 hover:rotate-180"}`} />
                 <span>{refreshDisabled ? `等待中... (${countdown}s)` : t.refresh}</span>
@@ -349,11 +337,7 @@ export function NodeDetailsTable({
               <Button
                 variant="default"
                 onClick={onExportLogs}
-                className={`flex items-center space-x-2 ${
-                  theme === "dark"
-                    ? "bg-green-600 hover:bg-green-700 text-white"
-                    : "bg-green-600 hover:bg-green-700 text-white"
-                }`}
+                className="tech-button bg-gradient-danger hover:shadow-glow-red flex items-center space-x-2"
               >
                 <Download className="w-4 h-4" />
                 <span>{t.exportLog}.zip</span>
@@ -361,27 +345,21 @@ export function NodeDetailsTable({
             </div>
           </div>
         </div>
-        <div
-          className={`rounded-md border transition-colors duration-200 ${
-            theme === "dark" ? "border-gray-700" : "border-gray-200"
-          }`}
-        >
+        <div className="rounded-md border transition-colors duration-200 border-border/50 bg-secondary/20 backdrop-blur-sm">
           <Table>
             <TableHeader>
-              <TableRow className={theme === "dark" ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-50"}>
-                <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.hostName}</TableHead>
-                <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.gpuType}</TableHead>
-                <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>bandwidthTest</TableHead>
-                <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>
+              <TableRow className="bg-secondary/50 hover:bg-secondary/70 transition-colors duration-200">
+                <TableHead className="text-tech-blue font-semibold">{t.hostName}</TableHead>
+                <TableHead className="text-tech-green font-semibold">{t.gpuType}</TableHead>
+                <TableHead className="text-tech-yellow font-semibold">bandwidthTest</TableHead>
+                <TableHead className="text-tech-orange font-semibold">
                   p2pBandwidthLatencyTest
                 </TableHead>
-                <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.ncclTest}</TableHead>
-                <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.dcgmDiagnostic}</TableHead>
-                <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.ibCheck}</TableHead>
+                <TableHead className="text-tech-purple font-semibold">{t.ncclTest}</TableHead>
+                <TableHead className="text-tech-cyan font-semibold">{t.dcgmDiagnostic}</TableHead>
+                <TableHead className="text-tech-blue font-semibold">{t.ibCheck}</TableHead>
                 <TableHead
-                  className={`cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 text-center ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
-                  }`}
+                  className="cursor-pointer hover:bg-secondary/60 transition-colors duration-200 text-center text-tech-green font-semibold"
                   onClick={() => onSort("checkResult")}
                   title={sortField === "checkResult" ? (sortDirection === "asc" ? t.sortDesc : t.sortAsc) : t.sortAsc}
                 >
@@ -390,21 +368,21 @@ export function NodeDetailsTable({
                     <div className="flex flex-col">
                       {sortField === "checkResult" ? (
                         sortDirection === "asc" ? (
-                          <ChevronUp className="w-3 h-3 text-blue-500" />
+                          <ChevronUp className="w-3 h-3 text-tech-blue" />
                         ) : (
-                          <ChevronDown className="w-3 h-3 text-blue-500" />
+                          <ChevronDown className="w-3 h-3 text-tech-blue" />
                         )
                       ) : (
                         <div className="flex flex-col">
-                          <ChevronUp className="w-3 h-3 text-gray-400" />
-                          <ChevronDown className="w-3 h-3 text-blue-500" />
+                          <ChevronUp className="w-3 h-3 text-muted-foreground" />
+                          <ChevronDown className="w-3 h-3 text-tech-blue" />
                         </div>
                       )}
                     </div>
                   </div>
                 </TableHead>
-                <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.executionLog}</TableHead>
-                                        <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.completionTime || "完成时间"}</TableHead>
+                <TableHead className="text-tech-red font-semibold">{t.executionLog}</TableHead>
+                <TableHead className="text-tech-cyan font-semibold">{t.completionTime || "完成时间"}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -419,7 +397,7 @@ export function NodeDetailsTable({
                 </TableRow>
               ) : paginatedData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                     {t.noData}
                   </TableCell>
                 </TableRow>
@@ -427,12 +405,12 @@ export function NodeDetailsTable({
                 paginatedData.map((item, index) => (
                   <TableRow
                     key={index}
-                    className={theme === "dark" ? "hover:bg-gray-700 border-gray-700" : "hover:bg-gray-50"}
+                    className="hover:bg-secondary/30 border-border/50 transition-colors duration-200"
                   >
-                    <TableCell className={`font-medium ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <TableCell className="font-medium text-foreground">
                       {item.nodeName || item.hostname}
                     </TableCell>
-                    <TableCell className={theme === "dark" ? "text-white" : "text-gray-900"}>{item.gpuType}</TableCell>
+                    <TableCell className="text-foreground">{item.gpuType}</TableCell>
                     <TableCell>
                       <PerformanceCell value={item.bandwidthTest} gpuType={item.gpuType} testType="bw" />
                     </TableCell>
@@ -456,17 +434,13 @@ export function NodeDetailsTable({
                         variant="outline"
                         size="sm"
                         onClick={() => onViewLog(item)}
-                        className={`${
-                          theme === "dark"
-                            ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                            : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                        }`}
+                        className="tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                       >
                         <FileText className="w-4 h-4 mr-1" />
                         {t.viewLog}
                       </Button>
                     </TableCell>
-                    <TableCell className={theme === "dark" ? "text-white" : "text-gray-900"}>
+                    <TableCell className="text-foreground font-mono">
                       {formatTime(item.completedAt || item.timestamp || item.createdAt || item.executionTime)}
                     </TableCell>
                   </TableRow>
@@ -479,20 +453,18 @@ export function NodeDetailsTable({
         {/* 分页控件 */}
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+            <div className="text-sm text-muted-foreground font-mono">
               {t.showing} {startIndex + 1}-{Math.min(endIndex, filteredData.length)} {t.of} {filteredData.length}{" "}
               {t.records}
             </div>
             <div className="flex items-center space-x-2">
-              <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+              <span className="text-sm text-muted-foreground font-mono">
                 {t.showPerPage}:
               </span>
               <select
                 value={pageSize}
                 onChange={(e) => onPageSizeChange(Number(e.target.value))}
-                className={`border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 ${
-                  theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "border-gray-300 bg-white text-gray-700"
-                }`}
+                className="tech-input border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-tech-blue transition-colors duration-200"
               >
                 <option value={10}>10 {t.rows}</option>
                 <option value={20}>20 {t.rows}</option>
@@ -506,11 +478,7 @@ export function NodeDetailsTable({
               size="sm"
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className={`px-3 py-1 ${
-                theme === "dark"
-                  ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-              }`}
+              className="tech-button px-3 py-1"
             >
               {t.previousPage}
             </Button>
@@ -520,7 +488,7 @@ export function NodeDetailsTable({
                 pageInfo.type === "ellipsis" ? (
                   <span
                     key={`ellipsis-${index}`}
-                    className={`px-2 py-1 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}
+                    className="px-2 py-1 text-muted-foreground"
                   >
                     ...
                   </span>
@@ -531,9 +499,9 @@ export function NodeDetailsTable({
                     size="sm"
                     onClick={() => onPageChange(pageInfo.page)}
                     className={`w-8 h-8 ${
-                      currentPage !== pageInfo.page && theme === "dark"
-                        ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                        : ""
+                      currentPage === pageInfo.page
+                        ? "tech-button bg-gradient-primary text-white"
+                        : "tech-button border-tech-blue/50 hover:bg-tech-blue/20"
                     }`}
                   >
                     {pageInfo.page}
@@ -547,11 +515,7 @@ export function NodeDetailsTable({
               size="sm"
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className={`px-3 py-1 ${
-                theme === "dark"
-                  ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-              }`}
+              className="tech-button px-3 py-1"
             >
               {t.nextPage}
             </Button>

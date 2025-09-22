@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![GHX Logo](logo.png)
+![GHX Logo](logo-menu.png)
 
 **An intelligent GPU cluster health monitoring and diagnostic system based on Kubernetes**
 
@@ -51,13 +51,12 @@ GHX (GPU Health Expert) is an enterprise-grade GPU cluster health monitoring and
 - 🤖 **Intelligent Scheduling**: Automatic idle node detection to avoid resource conflicts
 - 📈 **Performance Analysis**: Detailed performance benchmarking and trend analysis
 - 🌐 **Internationalization**: Support for Chinese and English interface switching
-- 🎨 **Theme Switching**: Light and dark theme adaptation
+- 🎨 **Theme of Technological Sensation**: A unified dark-tech style interface, featuring gradient colors and glowing effects
 - 📱 **Responsive Design**: Adapts to various screen sizes
 
 ### 🖼️ System Showcase
 
 ![System Homepage](homepage.png)
-![Feature Menu](menu1.png)
 
 ## 🏗️ System Architecture
 

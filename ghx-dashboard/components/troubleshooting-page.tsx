@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface TroubleshootingPageProps {
-  theme: "light" | "dark"
   language: "zh" | "en"
   t: any
 }
@@ -118,7 +117,7 @@ const mockGpuStatusData = [
   },
 ]
 
-export default function TroubleshootingPage({ theme, language, t }: TroubleshootingPageProps) {
+export default function TroubleshootingPage({ language, t }: TroubleshootingPageProps) {
   // GPU节点资源状态相关状态
   const [gpuNodeStatus, setGpuNodeStatus] = useState<any[]>(() => {
     // 从localStorage读取GPU节点状态数据
@@ -248,13 +247,11 @@ export default function TroubleshootingPage({ theme, language, t }: Troubleshoot
     value,
     gpuType,
     testType,
-    theme,
     t,
   }: {
     value: string
     gpuType: string
     testType: "bw" | "p2p" | "nccl"
-    theme: "light" | "dark"
     t: any
   }) => {
     // 解析数值（去除单位）
@@ -266,17 +263,17 @@ export default function TroubleshootingPage({ theme, language, t }: Troubleshoot
     }
 
     const benchmark = gpuBenchmarks[gpuType as keyof typeof gpuBenchmarks]
-    if (!benchmark) return <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{value}</span>
+    if (!benchmark) return <span className="text-foreground">{value}</span>
 
     // 处理N/A值
     if (!value || value === 'N/A' || value === 'Unknown') {
       return (
         <div className="flex items-center space-x-2">
-          <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{value}</span>
-          <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+          <span className="text-foreground">{value}</span>
+          <span className="text-xs text-muted-foreground">
             (基准值: {benchmark[testType]} GB/s)
           </span>
-          <Badge variant="secondary" className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+          <Badge variant="secondary" className="bg-secondary/50 text-muted-foreground">
             <Minus className="w-3 h-3 mr-1" />
             N/A
           </Badge>
@@ -290,11 +287,11 @@ export default function TroubleshootingPage({ theme, language, t }: Troubleshoot
 
     return (
       <div className="flex items-center space-x-2">
-        <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{value}</span>
-        <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+        <span className="text-foreground">{value}</span>
+        <span className="text-xs text-muted-foreground">
           (基准值: {benchmarkValue} GB/s)
         </span>
-        {isPass ? <CheckCircle className="w-4 h-4 text-green-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
+        {isPass ? <CheckCircle className="w-4 h-4 text-tech-green" /> : <XCircle className="w-4 h-4 text-tech-red" />}
       </div>
     )
   }
@@ -2164,7 +2161,7 @@ ${executionLog}
     // 处理N/A值
     if (!status || status === 'N/A' || status === 'Unknown') {
       return (
-        <Badge variant="secondary" className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+        <Badge variant="secondary" className="bg-secondary/50 text-muted-foreground">
           <Minus className="w-3 h-3 mr-1" />
           N/A
         </Badge>
@@ -2174,14 +2171,14 @@ ${executionLog}
     // 处理通过/未通过状态 - 使用与节点检查详情一致的样式
     if (status === 'Pass' || status === '通过') {
       return (
-        <Badge className="bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400">
+        <Badge className="status-running">
           <CheckCircle className="w-3 h-3 mr-1" />
           {t.pass || '通过'}
         </Badge>
       )
     } else if (status === 'No Pass' || status === '未通过') {
       return (
-        <Badge variant="destructive" className="dark:bg-red-900/20 dark:text-red-400">
+        <Badge className="status-error">
           <XCircle className="w-3 h-3 mr-1" />
           {t.noPass || '未通过'}
         </Badge>
@@ -2190,7 +2187,7 @@ ${executionLog}
     
     // 其他状态
     return (
-      <Badge variant="outline" className="text-gray-700 border-gray-300">
+      <Badge variant="outline" className="border-border/50 text-foreground">
         {status}
       </Badge>
     )
@@ -2223,54 +2220,48 @@ ${executionLog}
     <>
       {/* 统计概要（按节点空闲状态分类） */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card
-          className={`transition-colors duration-200 ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
-        >
+        <Card className="tech-card bg-gradient-to-br from-tech-blue/10 to-tech-cyan/10 border-tech-blue/30 shadow-glow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className={`text-sm font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+            <CardTitle className="text-sm font-semibold text-tech-blue">
               {t.totalNodes}
             </CardTitle>
-            <CheckCircle className={`h-4 w-4 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`} />
+            <CheckCircle className="h-4 w-4 text-tech-blue animate-pulse" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+            <div className="text-2xl font-bold text-foreground">
               {gpuStatusSummary.totalNodes}
             </div>
-            <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>{t.totalNodesDesc}</p>
+            <p className="text-xs text-muted-foreground font-mono">{t.totalNodesDesc}</p>
           </CardContent>
         </Card>
 
-        <Card
-          className={`transition-colors duration-200 ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
-        >
+        <Card className="tech-card bg-gradient-to-br from-tech-green/10 to-tech-green/5 border-tech-green/30 shadow-glow-green">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className={`text-sm font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+            <CardTitle className="text-sm font-semibold text-tech-green">
               {t.idleNodes}
             </CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            <CheckCircle className="h-4 w-4 text-tech-green animate-pulse" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold text-green-600 ${theme === "dark" ? "text-green-400" : ""}`}>
+            <div className="text-2xl font-bold text-tech-green">
               {gpuStatusSummary.idleNodes}
             </div>
-            <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>{t.idleNodesDesc}</p>
+            <p className="text-xs text-muted-foreground font-mono">{t.idleNodesDesc}</p>
           </CardContent>
         </Card>
 
-        <Card
-          className={`transition-colors duration-200 ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
-        >
+        <Card className="tech-card bg-gradient-to-br from-tech-red/10 to-tech-red/5 border-tech-red/30 shadow-glow-red">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className={`text-sm font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+            <CardTitle className="text-sm font-semibold text-tech-red">
               {t.busyNodes}
             </CardTitle>
-            <XCircle className="h-4 w-4 text-red-500" />
+            <XCircle className="h-4 w-4 text-tech-red animate-pulse" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold text-red-600 ${theme === "dark" ? "text-red-400" : ""}`}>
+            <div className="text-2xl font-bold text-tech-red">
               {gpuStatusSummary.busyNodes}
             </div>
-            <p className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>{t.busyNodesDesc}</p>
+            <p className="text-xs text-muted-foreground font-mono">{t.busyNodesDesc}</p>
           </CardContent>
         </Card>
       </div>
@@ -2288,7 +2279,6 @@ ${executionLog}
         pageSize={gpuStatusPageSize}
         onPageChange={handleGpuStatusPageChange}
         onPageSizeChange={handleGpuStatusPageSizeChange}
-        theme={theme}
         t={t}
         lastRefreshTime={lastRefreshTime}
         gpuNodeStatus={gpuNodeStatus}
@@ -2310,14 +2300,12 @@ ${executionLog}
       />
 
       {/* 节点选择和诊断配置 */}
-      <Card
-        className={`mt-6 transition-colors duration-200 ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
-      >
+      <Card className="tech-card mt-6 bg-gradient-to-br from-tech-purple/10 to-tech-blue/10 border-tech-purple/30 shadow-glow">
         <CardHeader>
-          <CardTitle className={`text-xl ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+          <CardTitle className="text-xl font-bold bg-gradient-to-r from-tech-purple to-tech-blue bg-clip-text text-transparent">
             {t.selfServiceDiagnostic}
           </CardTitle>
-          <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+          <p className="text-sm text-muted-foreground font-mono">
             {t.selfServiceDiagnosticDesc}
           </p>
         </CardHeader>
@@ -2325,7 +2313,7 @@ ${executionLog}
           {/* 节点选择 */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className={`text-lg font-medium ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <h3 className="text-lg font-semibold text-tech-blue">
                 {t.selectIdleNodes}
             </h3>
               {idleNodes.length > 0 && (
@@ -2340,15 +2328,11 @@ ${executionLog}
                         setSelectedNodes(idleNodes.map(node => node.nodeName))
                       }
                     }}
-                    className={`text-xs ${
-                      theme === "dark" 
-                        ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800" 
-                        : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                    }`}
+                    className="tech-button text-xs border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                   >
                     {selectedNodes.length === idleNodes.length ? t.deselectAll : t.selectAll}
                   </Button>
-                  <span className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                  <span className="text-sm text-muted-foreground font-mono">
                     {t.selected} {selectedNodes.length} / {idleNodes.length}
                   </span>
                 </div>
@@ -2357,7 +2341,7 @@ ${executionLog}
             
             {idleNodes.length === 0 ? (
               <div
-                className={`p-4 rounded-md border-2 border-dashed ${theme === "dark" ? "border-gray-600 text-gray-400" : "border-gray-300 text-gray-500"}`}
+                className="p-4 rounded-md border-2 border-dashed border-border/50 text-muted-foreground"
               >
                 <div className="flex items-center justify-center space-x-2">
                   <AlertTriangle className="w-5 h-5" />
@@ -2372,11 +2356,7 @@ ${executionLog}
                     placeholder={t.searchHostname}
                     value={nodeSearchTerm}
                     onChange={(e) => setNodeSearchTerm(e.target.value)}
-                    className={`max-w-sm ${
-                      theme === "dark" 
-                        ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400" 
-                        : ""
-                    }`}
+                    className="tech-input max-w-sm"
                   />
                 </div>
                 
@@ -2387,12 +2367,8 @@ ${executionLog}
                     key={node.nodeName}
                     className={`p-3 rounded-md border transition-colors ${
                       selectedNodes.includes(node.nodeName)
-                        ? theme === "dark"
-                          ? "border-blue-500 bg-blue-900/20"
-                          : "border-blue-500 bg-blue-50"
-                        : theme === "dark"
-                          ? "border-gray-600 hover:border-gray-500"
-                          : "border-gray-300 hover:border-gray-400"
+                        ? "border-tech-blue bg-tech-blue/20 shadow-glow"
+                        : "border-border/50 hover:border-tech-blue/50 hover:shadow-glow"
                     }`}
                   >
                     <div className="flex items-center space-x-3">
@@ -2401,11 +2377,11 @@ ${executionLog}
                         onCheckedChange={(checked) => handleNodeSelection(node.nodeName, checked as boolean)}
                       />
                       <div className="flex-1">
-                        <div className={`font-medium ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                        <div className="font-medium text-foreground">
                           {node.nodeName}
                         </div>
-                        <div className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
-                          {node.gpuType} • <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{node.nodeStatus === 'idle' ? 8 : 0}</span> GPUs
+                        <div className="text-sm text-muted-foreground font-mono">
+                          {node.gpuType} • <span className="text-foreground">{node.nodeStatus === 'idle' ? 8 : 0}</span> GPUs
                         </div>
                       </div>
                       <Badge variant="secondary" className="text-green-600 bg-green-100">
@@ -2418,11 +2394,11 @@ ${executionLog}
                 
                 {/* 分页控件 - 常驻显示 */}
                 <div className="mt-4 flex items-center justify-between">
-                  <div className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                  <div className="text-sm text-foreground font-mono">
                     {t.display} {startNodeIndex + 1}-{Math.min(endNodeIndex, filteredIdleNodes.length)} {t.of} {filteredIdleNodes.length} {t.records}
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                    <span className="text-sm text-muted-foreground font-mono">
                       {t.displayPerPage}:
                     </span>
                     <select
@@ -2431,9 +2407,7 @@ ${executionLog}
                         setNodePageSize(Number(e.target.value))
                         setNodeCurrentPage(1) // 重置到第一页
                       }}
-                      className={`border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 ${
-                        theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "border-gray-300 bg-white text-gray-700"
-                      }`}
+                      className="tech-input border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-tech-blue transition-colors duration-200"
                     >
                       <option value={6}>6 {t.rows}</option>
                       <option value={12}>12 {t.rows}</option>
@@ -2450,11 +2424,7 @@ ${executionLog}
                     size="sm"
                     onClick={() => setNodeCurrentPage(Math.max(1, nodeCurrentPage - 1))}
                     disabled={nodeCurrentPage === 1}
-                    className={`text-xs ${
-                      theme === "dark" 
-                        ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800" 
-                        : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                    }`}
+                    className="tech-button text-xs border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                   >
                     {t.previousPage}
                   </Button>
@@ -2480,10 +2450,8 @@ ${executionLog}
                         onClick={() => setNodeCurrentPage(pageNum)}
                         className={`text-xs ${
                           pageNum === nodeCurrentPage
-                            ? "bg-blue-600 text-white"
-                            : theme === "dark"
-                              ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                              : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
+                            ? "bg-tech-blue text-white shadow-glow"
+                            : "tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                         }`}
                       >
                         {pageNum}
@@ -2496,11 +2464,7 @@ ${executionLog}
                     size="sm"
                     onClick={() => setNodeCurrentPage(Math.min(totalNodePages, nodeCurrentPage + 1))}
                     disabled={nodeCurrentPage === totalNodePages}
-                    className={`text-xs ${
-                      theme === "dark" 
-                        ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800" 
-                        : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                    }`}
+                    className="tech-button text-xs border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                   >
                     {t.nextPage}
                   </Button>
@@ -2508,9 +2472,7 @@ ${executionLog}
                 
                 {/* 搜索结果提示 */}
                 {filteredIdleNodes.length === 0 && nodeSearchTerm && (
-                  <div className={`mt-4 p-3 rounded-md border-2 border-dashed ${
-                    theme === "dark" ? "border-gray-600 text-gray-400" : "border-gray-300 text-gray-500"
-                  }`}>
+                  <div className="mt-4 p-3 rounded-md border-2 border-dashed border-border/50 text-muted-foreground">
                     <div className="text-center">
                       <span>{t.noMatchingHostname}: "{nodeSearchTerm}"</span>
                     </div>
@@ -2523,7 +2485,7 @@ ${executionLog}
           {/* 检查项目选择 */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className={`text-lg font-medium ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <h3 className="text-lg font-semibold text-tech-blue">
                 {t.selectCheckItems}
             </h3>
               {currentCheckItems.length > 0 && (
@@ -2538,15 +2500,11 @@ ${executionLog}
                         setSelectedCheckItems(currentCheckItems.map(item => item.id))
                       }
                     }}
-                    className={`text-xs ${
-                      theme === "dark" 
-                        ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800" 
-                        : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                    }`}
+                    className="tech-button text-xs border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                   >
                     {selectedCheckItems.length === currentCheckItems.length ? t.deselectAll : t.selectAll}
                   </Button>
-                  <span className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+                  <span className="text-sm text-muted-foreground font-mono">
                     {t.selected} {selectedCheckItems.length} / {currentCheckItems.length}
                   </span>
                 </div>
@@ -2558,12 +2516,8 @@ ${executionLog}
                   key={item.id}
                   className={`p-3 rounded-md border transition-colors ${
                     selectedCheckItems.includes(item.id)
-                      ? theme === "dark"
-                        ? "border-blue-500 bg-blue-900/20"
-                        : "border-blue-500 bg-blue-50"
-                      : theme === "dark"
-                        ? "border-gray-600 hover:border-gray-500"
-                        : "border-gray-300 hover:border-gray-400"
+                      ? "border-tech-blue bg-tech-blue/20 shadow-glow"
+                      : "border-border/50 hover:border-tech-blue/50 hover:shadow-glow"
                   }`}
                 >
                   <div className="flex items-start space-x-3">
@@ -2573,10 +2527,10 @@ ${executionLog}
                       className="mt-1"
                     />
                     <div className="flex-1">
-                      <div className={`font-medium ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                      <div className="font-medium text-foreground">
                         {item.label}
                       </div>
-                      <div className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                      <div className="text-sm text-muted-foreground font-mono">
                         {item.description}
                       </div>
                     </div>
@@ -2589,7 +2543,7 @@ ${executionLog}
           {/* DCGM级别选择 */}
           {selectedCheckItems.includes("dcgmDiag") && (
             <div>
-              <h3 className={`text-lg font-medium mb-3 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              <h3 className="text-lg font-semibold mb-3 text-tech-blue">
                 {t.dcgmDiagnosticLevel}
               </h3>
               <div className="flex items-center space-x-4">
@@ -2602,23 +2556,15 @@ ${executionLog}
                       value={level}
                       checked={dcgmLevel === level}
                       onChange={(e) => setDcgmLevel(Number(e.target.value))}
-                      className={`w-5 h-5 ${
-                        theme === "dark" 
-                          ? "text-blue-600 bg-gray-800 border-2 border-gray-400 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800" 
-                          : "text-blue-600 bg-white border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white"
-                      }`}
+                      className="w-5 h-5 text-tech-blue bg-background border-2 border-border focus:ring-2 focus:ring-tech-blue focus:ring-offset-2 focus:ring-offset-background"
                     />
-                    <label htmlFor={`dcgm-${level}`} className={`text-sm font-medium ${
-                      theme === "dark" 
-                        ? "text-white cursor-pointer" 
-                        : "text-gray-700 cursor-pointer"
-                    }`}>
+                    <label htmlFor={`dcgm-${level}`} className="text-sm font-medium text-foreground cursor-pointer">
                       {t[`level${level}`]}
                     </label>
                   </div>
                 ))}
               </div>
-              <p className={`text-xs mt-2 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+              <p className="text-xs mt-2 text-muted-foreground font-mono">
                 {t.level1}：{t.level1Desc}，{t.level2}：{t.level2Desc}，{t.level3}：{t.level3Desc}，{t.level4}：{t.level4Desc}
               </p>
             </div>
@@ -2650,13 +2596,13 @@ ${executionLog}
 
       {/* 诊断任务管理 */}
         <Card
-          className={`mt-6 transition-colors duration-200 ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
+          className="mt-6 transition-colors duration-200 tech-card bg-gradient-to-br from-secondary/20 to-secondary/10 border-border/50 shadow-glow"
         >
           <CardHeader>
-          <CardTitle className={`text-xl ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+          <CardTitle className="text-xl font-bold text-foreground">
             {t.diagnosticTaskManagement}
           </CardTitle>
-                      <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                      <p className="text-sm text-muted-foreground font-mono">
             {t.diagnosticTaskManagementDesc}
           </p>
           <div className="flex items-center justify-between">
@@ -2687,16 +2633,12 @@ ${executionLog}
                 variant="destructive"
                 onClick={deleteSelectedJobs}
                 disabled={selectedJobs.length === 0}
-                className={`${
-                  theme === "dark" 
-                    ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800" 
-                    : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                }`}
+                className="tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
               >
                 {t.deleteSelected} ({selectedJobs.length})
               </Button>
                   </div>
-                      </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-4">
@@ -2708,39 +2650,37 @@ ${executionLog}
                 onChange={toggleSelectAllJobs}
                 className="rounded border-gray-300"
               />
-              <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                    <span className="text-sm text-muted-foreground font-mono">
                 {t.selectAll}
                         </span>
                         </div>
 
             {/* 诊断任务表格 */}
-            <div className={`border rounded-lg overflow-hidden transition-colors duration-200 ${
-              theme === "dark" ? "border-gray-700" : "border-gray-200"
-            }`}>
+            <div className="border rounded-lg overflow-hidden transition-colors duration-200 border-border/50">
               <Table>
                 <TableHeader>
-                  <TableRow className={theme === "dark" ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-50"}>
-                    <TableHead className={`w-12 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  <TableRow className="bg-secondary/50 hover:bg-secondary/70">
+                    <TableHead className="w-12 text-tech-blue font-semibold">
                       <input
                         type="checkbox"
                         checked={selectedJobs.length === jobs.length && jobs.length > 0}
                         onChange={toggleSelectAllJobs}
-                        className={`rounded ${theme === "dark" ? "border-gray-500 bg-gray-600" : "border-gray-300"}`}
+                        className="rounded border-border/50 bg-secondary/20 accent-tech-blue"
                       />
                     </TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.jobId}</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.status}</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.node}</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.testItems}</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.dcgmLevel}</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.creationTime}</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.operation}</TableHead>
+                    <TableHead className="text-tech-green font-semibold">{t.jobId}</TableHead>
+                    <TableHead className="text-tech-yellow font-semibold">{t.status}</TableHead>
+                    <TableHead className="text-tech-orange font-semibold">{t.node}</TableHead>
+                    <TableHead className="text-tech-purple font-semibold">{t.testItems}</TableHead>
+                    <TableHead className="text-tech-cyan font-semibold">{t.dcgmLevel}</TableHead>
+                    <TableHead className="text-tech-red font-semibold">{t.creationTime}</TableHead>
+                    <TableHead className="text-tech-blue font-semibold">{t.operation}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {jobs.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         {t.noTaskRecords}
                       </TableCell>
                     </TableRow>
@@ -2752,7 +2692,7 @@ ${executionLog}
                                job.selectedNodes?.some((node: string) => node.toLowerCase().includes(searchTerm))
                       })
                       .map((job, index) => (
-                        <TableRow key={index} className={theme === "dark" ? "border-gray-700 hover:bg-gray-800" : "border-gray-200 hover:bg-gray-50"}>
+                        <TableRow key={index} className="border-border/50 hover:bg-secondary/30">
                           <TableCell>
                             <input
                               type="checkbox"
@@ -2767,7 +2707,7 @@ ${executionLog}
                               className="rounded border-gray-300"
                             />
                           </TableCell>
-                          <TableCell className={`font-medium ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                          <TableCell className="font-medium text-foreground">
                             {job.jobId}
                           </TableCell>
                           <TableCell>
@@ -2790,16 +2730,16 @@ ${executionLog}
                               {job.status || 'Unknown'}
                             </Badge>
                           </TableCell>
-                          <TableCell className={theme === "dark" ? "text-white" : "text-gray-900"}>
+                          <TableCell className="text-foreground">
                             {job.selectedNodes?.join(', ') || 'N/A'}
                           </TableCell>
-                          <TableCell className={theme === "dark" ? "text-white" : "text-gray-900"}>
+                          <TableCell className="text-foreground">
                             {job.enabledTests?.join(', ') || 'N/A'}
                           </TableCell>
-                          <TableCell className={theme === "dark" ? "text-white" : "text-gray-900"}>
+                          <TableCell className="text-foreground">
                             {job.enabledTests && job.enabledTests.includes('dcgmDiag') ? (job.dcgmLevel || 1) : 'N/A'}
                           </TableCell>
-                          <TableCell className={theme === "dark" ? "text-white" : "text-gray-900"}>
+                          <TableCell className="text-foreground">
                             {formatTime(job.creationTimestamp || job.createdAt || 'N/A')}
                           </TableCell>
                           <TableCell>
@@ -2834,34 +2774,31 @@ ${executionLog}
                                   {t.delete}
                                 </Button>
                               )}
-                      </div>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
                   )}
                 </TableBody>
               </Table>
-                      </div>
 
             {/* 分页控制 */}
             <div className="mt-4 flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                <div className="text-sm text-foreground font-mono">
                   {jobs.length === 0 
                     ? t.noRecords 
                     : `${t.display}1-${jobs.length}${t.items}, ${t.total}${jobs.length}${t.records}`
                   }
                   </div>
                 <div className="flex items-center space-x-2">
-                  <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                  <span className="text-sm text-muted-foreground font-mono">
                     {t.displayPerPage}:
                   </span>
                   <select
                     value={jobPageSize}
                     onChange={(e) => setJobPageSize(Number(e.target.value))}
-                    className={`border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 cursor-pointer ${
-                      theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "border-gray-300 bg-white text-gray-700"
-                    }`}
+                    className="tech-input border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-tech-blue transition-colors duration-200 cursor-pointer"
                     style={{ pointerEvents: 'auto', zIndex: 10 }}
                   >
                     <option value={5}>5{t.rows}</option>
@@ -2869,6 +2806,7 @@ ${executionLog}
                     <option value={20}>20{t.rows}</option>
                   </select>
                 </div>
+              </div>
             </div>
               <div className="flex items-center space-x-2">
                 <Button
@@ -2876,22 +2814,14 @@ ${executionLog}
                   size="sm"
                   onClick={() => setJobCurrentPage(Math.max(1, jobCurrentPage - 1))}
                   disabled={jobCurrentPage === 1 || jobs.length === 0}
-                  className={`${
-                    theme === "dark" 
-                      ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800" 
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                  }`}
+                  className="tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                 >
                   {t.previousPage}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`${
-                    theme === "dark" 
-                      ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800" 
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                  }`}
+                  className="tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                 >
                   {jobCurrentPage}
                 </Button>
@@ -2900,15 +2830,11 @@ ${executionLog}
                   size="sm"
                   onClick={() => setJobCurrentPage(jobCurrentPage + 1)}
                   disabled={jobCurrentPage * jobPageSize >= jobs.length || jobs.length === 0}
-                  className={`${
-                    theme === "dark" 
-                      ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800" 
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                  }`}
+                  className="tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                 >
                   {t.nextPage}
                 </Button>
-            </div>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -2916,13 +2842,13 @@ ${executionLog}
 
           {/* 诊断结果管理 */}
       <Card
-        className={`mt-6 transition-colors duration-200 ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}
+        className="mt-6 transition-colors duration-200 tech-card bg-gradient-to-br from-secondary/20 to-secondary/10 border-border/50 shadow-glow"
       >
         <CardHeader>
-          <CardTitle className={`text-xl ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+          <CardTitle className="text-xl font-bold text-foreground">
             {t.diagnosticResultManagement}
           </CardTitle>
-          <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+          <p className="text-sm text-muted-foreground font-mono">
             {t.diagnosticResultManagementDesc}
           </p>
           <div className="flex items-center justify-between">
@@ -2953,11 +2879,7 @@ ${executionLog}
                 variant="outline"
                 onClick={exportSelectedResults}
                 disabled={selectedResults.length === 0}
-                className={`${
-                  theme === "dark" 
-                    ? "border-green-600 text-green-400 hover:bg-green-700 bg-gray-800" 
-                    : "border-green-600 text-green-600 hover:bg-green-100 bg-white"
-                }`}
+                className="tech-button border-tech-green/50 hover:bg-tech-green/20 hover:border-tech-green text-tech-green"
               >
                 <Download className="w-4 h-4 mr-2" />
                 {t.exportSelected} ({selectedResults.length})
@@ -2966,11 +2888,7 @@ ${executionLog}
                 variant="destructive"
                 onClick={deleteSelectedResults}
                 disabled={selectedResults.length === 0}
-                className={`${
-                  theme === "dark" 
-                    ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800" 
-                    : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                }`}
+                className="tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
               >
                 {t.deleteSelected} ({selectedResults.length})
               </Button>
@@ -2987,43 +2905,41 @@ ${executionLog}
                 onChange={toggleSelectAll}
                 className="rounded border-gray-300"
               />
-              <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                    <span className="text-sm text-muted-foreground font-mono">
                 {t.selectAll}
               </span>
             </div>
 
             {/* 诊断结果表格 */}
-            <div className={`rounded-md border transition-colors duration-200 ${
-              theme === "dark" ? "border-gray-700" : "border-gray-200"
-            }`}>
+            <div className="rounded-md border transition-colors duration-200 border-border/50">
             <Table>
               <TableHeader>
-                <TableRow className={theme === "dark" ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-50"}>
-                    <TableHead className="w-12">
+                <TableRow className="bg-secondary/50 hover:bg-secondary/70">
+                    <TableHead className="w-12 text-tech-blue font-semibold">
                       <input
                         type="checkbox"
                         checked={selectedResults.length === diagnosticResults.length && diagnosticResults.length > 0}
                         onChange={toggleSelectAll}
-                        className="rounded border-gray-300"
+                        className="rounded border-border/50 accent-tech-blue"
                       />
                   </TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>Job ID</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.hostName}</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.gpuType}</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>bandwidthTest</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>p2pBandwidthLatencyTest</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.ncclTests}</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.dcgmDiag}</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.ibCheck}</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.nodeStatus}</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.executionLog}</TableHead>
-                    <TableHead className={theme === "dark" ? "text-white" : "text-gray-900"}>{t.completionTime}</TableHead>
+                    <TableHead className="text-tech-green font-semibold">Job ID</TableHead>
+                    <TableHead className="text-tech-yellow font-semibold">{t.hostName}</TableHead>
+                    <TableHead className="text-tech-orange font-semibold">{t.gpuType}</TableHead>
+                    <TableHead className="text-tech-purple font-semibold">bandwidthTest</TableHead>
+                    <TableHead className="text-tech-cyan font-semibold">p2pBandwidthLatencyTest</TableHead>
+                    <TableHead className="text-tech-red font-semibold">{t.ncclTests}</TableHead>
+                    <TableHead className="text-tech-blue font-semibold">{t.dcgmDiag}</TableHead>
+                    <TableHead className="text-tech-green font-semibold">{t.ibCheck}</TableHead>
+                    <TableHead className="text-tech-yellow font-semibold">{t.nodeStatus}</TableHead>
+                    <TableHead className="text-tech-orange font-semibold">{t.executionLog}</TableHead>
+                    <TableHead className="text-tech-purple font-semibold">{t.completionTime}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                   {diagnosticResults.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={12} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                         暂无诊断结果
                       </TableCell>
                     </TableRow>
@@ -3048,7 +2964,7 @@ ${executionLog}
                   return (
                     <TableRow
                             key={index}
-                            className={theme === "dark" ? "hover:bg-gray-700 border-gray-700" : "hover:bg-gray-50"}
+                            className="hover:bg-secondary/30 border-border/50"
                           >
                             <TableCell>
                               <input
@@ -3064,13 +2980,13 @@ ${executionLog}
                                 className="rounded border-gray-300"
                               />
                             </TableCell>
-                            <TableCell className={`font-mono text-xs ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                            <TableCell className="font-mono text-xs text-muted-foreground">
                               {result.jobId}
                             </TableCell>
-                            <TableCell className={`font-medium ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                            <TableCell className="font-medium text-foreground">
                               {convertedResult.nodeName}
                             </TableCell>
-                            <TableCell className={theme === "dark" ? "text-white" : "text-gray-900"}>
+                            <TableCell className="text-foreground">
                               {convertedResult.gpuType}
                             </TableCell>
                             <TableCell>
@@ -3078,7 +2994,6 @@ ${executionLog}
                                 value={convertedResult.bandwidthTest} 
                                 gpuType={convertedResult.gpuType} 
                                 testType="bw" 
-                                theme={theme}
                                 t={t}
                               />
                             </TableCell>
@@ -3087,7 +3002,6 @@ ${executionLog}
                                 value={convertedResult.p2pBandwidthLatencyTest} 
                                 gpuType={convertedResult.gpuType} 
                                 testType="p2p" 
-                                theme={theme}
                                 t={t}
                               />
                             </TableCell>
@@ -3096,7 +3010,6 @@ ${executionLog}
                                 value={convertedResult.ncclTests} 
                                 gpuType={convertedResult.gpuType} 
                                 testType="nccl" 
-                                theme={theme}
                                 t={t}
                               />
                             </TableCell>
@@ -3122,17 +3035,13 @@ ${executionLog}
                                 variant="outline"
                                 size="sm"
                                 onClick={() => viewResult(result)}
-                      className={`${
-                                  theme === "dark"
-                                    ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                                    : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                                }`}
+                      className="tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                               >
                                 <FileText className="w-4 h-4 mr-1" />
                                 {t.viewLog}
                               </Button>
                       </TableCell>
-                            <TableCell className={theme === "dark" ? "text-white" : "text-gray-900"}>
+                            <TableCell className="text-foreground">
                               {convertedResult.executionTime}
                             </TableCell>
                     </TableRow>
@@ -3146,7 +3055,7 @@ ${executionLog}
             {/* 分页控制 - 始终显示 */}
             <div className="mt-4 flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}>
+                <div className="text-sm text-foreground font-mono">
                   {(() => {
                     const filteredResults = diagnosticResults.filter(result => {
                       const convertedResult = getDisplayData(result)
@@ -3170,15 +3079,13 @@ ${executionLog}
                   })()}
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                  <span className="text-sm text-muted-foreground font-mono">
                     {t.displayPerPage}:
                   </span>
                   <select
                     value={resultsPageSize}
                     onChange={(e) => setResultsPageSize(Number(e.target.value))}
-                    className={`border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 cursor-pointer ${
-                      theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "border-gray-300 bg-white text-gray-700"
-                    }`}
+                    className="tech-input border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-tech-blue transition-colors duration-200 cursor-pointer"
                     style={{ pointerEvents: 'auto', zIndex: 10 }}
                   >
                     <option value={5}>5{t.rows}</option>
@@ -3205,22 +3112,14 @@ ${executionLog}
                     })
                     return resultsCurrentPage === 1 || filteredResults.length === 0
                   })()}
-                  className={`px-3 py-1 ${
-                    theme === "dark"
-                      ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                  }`}
+                  className="tech-button px-3 py-1 border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                 >
                   {t.previousPage}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`px-3 py-1 ${
-                    theme === "dark"
-                      ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                  }`}
+                  className="tech-button px-3 py-1 border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                 >
                   {resultsCurrentPage}
                 </Button>
@@ -3241,11 +3140,7 @@ ${executionLog}
                     })
                     return resultsCurrentPage * resultsPageSize >= filteredResults.length || filteredResults.length === 0
                   })()}
-                  className={`px-3 py-1 ${
-                    theme === "dark"
-                      ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                  }`}
+                  className="tech-button px-3 py-1 border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                 >
                   {t.nextPage}
                 </Button>
@@ -3258,13 +3153,13 @@ ${executionLog}
       {/* 诊断结果日志查看对话框 - 与节点检查详情保持一致 */}
       <Dialog open={showDetail} onOpenChange={setShowDetail}>
         <DialogContent
-          className={`max-w-5xl max-h-[90vh] ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white"}`}
+          className="max-w-5xl max-h-[90vh] tech-card bg-gradient-to-br from-secondary/20 to-secondary/10 border-border/50 shadow-glow"
         >
           <DialogHeader>
-            <DialogTitle className={theme === "dark" ? "text-white" : "text-gray-900"}>
+            <DialogTitle className="text-foreground">
               {t.diagnosticResultDetails}
             </DialogTitle>
-            <DialogDescription className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
+            <DialogDescription className="text-muted-foreground">
               {t.diagnosticResultDetailsDesc}
             </DialogDescription>
           </DialogHeader>
@@ -3273,50 +3168,50 @@ ${executionLog}
               <>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className={`font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                    <span className="font-medium text-muted-foreground">
                       {t.node}:
                     </span>
-                    <span className={`ml-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <span className="ml-2 text-foreground">
                       {selectedResult.nodeName || selectedResult.hostname}
                     </span>
                   </div>
                   <div>
-                    <span className={`font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                    <span className="font-medium text-muted-foreground">
                       {t.gpuType}:
                     </span>
-                    <span className={`ml-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <span className="ml-2 text-foreground">
                       {selectedResult.gpuType}
                     </span>
                   </div>
                   <div>
-                    <span className={`font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                    <span className="font-medium text-muted-foreground">
                       {t.jobId}:
                     </span>
-                    <span className={`ml-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <span className="ml-2 text-foreground">
                       {selectedResult.jobId}
                     </span>
                   </div>
                   <div>
-                    <span className={`font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                    <span className="font-medium text-muted-foreground">
                       {t.dcgmDiagnosticLevel}:
                     </span>
-                    <span className={`ml-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <span className="ml-2 text-foreground">
                       {selectedResult.enabledTests && selectedResult.enabledTests.includes('dcgmDiag') ? (selectedResult.dcgmLevel || 1) : 'N/A'}
                     </span>
                   </div>
                   <div>
-                    <span className={`font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                    <span className="font-medium text-muted-foreground">
                       {t.completionTime || "完成时间"}:
                     </span>
-                    <span className={`ml-2 ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                    <span className="ml-2 text-foreground">
                       {formatTime(calculateCompletionTime(selectedResult.createdAt, selectedResult.executionTime) || 'N/A')}
                     </span>
                   </div>
                   <div>
-                    <span className={`font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                    <span className="font-medium text-muted-foreground">
                       {t.overallResult}:
                     </span>
-                    <span className={`ml-2`}>
+                    <span className="ml-2">
                       <StatusBadge status={selectedResult.inspectionResult} />
                     </span>
                   </div>
@@ -3324,18 +3219,14 @@ ${executionLog}
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className={`font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                    <span className="font-medium text-muted-foreground">
                       {t.executionLog}:
                     </span>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleExportDiagnosticLog(selectedResult)}
-                      className={`${
-                        theme === "dark"
-                          ? "border-gray-600 text-white hover:bg-gray-700 bg-gray-800"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-100 bg-white"
-                      }`}
+                      className="tech-button border-tech-blue/50 hover:bg-tech-blue/20 hover:border-tech-blue"
                     >
                       <Download className="w-4 w-4 mr-1" />
                       {t.exportLog}
@@ -3343,12 +3234,10 @@ ${executionLog}
                   </div>
 
                   <ScrollArea
-                    className={`h-80 w-full rounded-md border p-4 ${
-                      theme === "dark" ? "border-gray-600 bg-gray-700" : "border-gray-300 bg-gray-50"
-                    }`}
+                    className="h-80 w-full rounded-md border p-4 border-border/50 bg-secondary/20"
                   >
                     <pre
-                      className={`text-sm whitespace-pre-wrap ${theme === "dark" ? "text-gray-200" : "text-gray-800"}`}
+                      className="text-sm whitespace-pre-wrap text-foreground"
                     >
                       {selectedResult.executionLog || t.noLog}
                     </pre>

@@ -507,22 +507,12 @@ const mockData = [
 ]
 
 export default function GhxDashboard() {
-  const [theme, setTheme] = useState<"light" | "dark">("light")
   const [language, setLanguage] = useState<"zh" | "en">("zh")
   const [currentPage, setCurrentPage] = useState("dashboard")
 
   // 获取当前语言的文本
   const t = i18n[language]
 
-  // 主题切换处理
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light"
-    setTheme(newTheme)
-    // 保存到localStorage
-    if (typeof window !== "undefined") {
-      localStorage.setItem("theme", newTheme)
-    }
-  }
 
   // 语言切换处理
   const toggleLanguage = () => {
@@ -547,10 +537,9 @@ export default function GhxDashboard() {
     }
   }
 
-  // 初始化主题、语言和页面状态
+  // 初始化语言和页面状态
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("theme") as "light" | "dark"
       const savedLanguage = localStorage.getItem("language") as "zh" | "en"
       
       // 优先从URL参数获取页面状态，防止Ctrl+F5清除缓存后丢失状态
@@ -566,9 +555,6 @@ export default function GhxDashboard() {
         targetPage = savedPage
       }
 
-      if (savedTheme) {
-        setTheme(savedTheme)
-      }
       if (savedLanguage) {
         setLanguage(savedLanguage)
       }
@@ -587,13 +573,13 @@ export default function GhxDashboard() {
   const renderPageContent = () => {
     switch (currentPage) {
       case "dashboard":
-        return <DashboardContent theme={theme} language={language} t={t} />
+        return <DashboardContent language={language} t={t} />
       case "troubleshooting":
-        return <TroubleshootingPage theme={theme} language={language} t={t} />
+        return <TroubleshootingPage language={language} t={t} />
       case "burn-in":
-        return <BurnInPage theme={theme} language={language} t={t} />
+        return <BurnInPage language={language} t={t} />
       default:
-        return <DashboardContent theme={theme} language={language} t={t} />
+        return <DashboardContent language={language} t={t} />
     }
   }
 
@@ -601,9 +587,7 @@ export default function GhxDashboard() {
     <DashboardLayout
       currentPage={currentPage}
       onPageChange={handlePageChange}
-      theme={theme}
       language={language}
-      onThemeToggle={toggleTheme}
       onLanguageToggle={toggleLanguage}
       t={t}
     >

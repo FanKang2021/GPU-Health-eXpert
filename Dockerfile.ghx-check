@@ -295,9 +295,16 @@ RUN pip3 install flask flask-cors
 # Copy GPU check job script
 COPY ./gpu_check_job.py /opt/gpu_check_job.py
 
+# Copy GPU burnin monitor script
+COPY ./gpu_burnin_monitor.py /opt/gpu_burnin_monitor.py
+
+# Install Python packages for burnin monitoring
+RUN pip3 install requests pyyaml
+
 # Make scripts executable
 RUN chmod +x /opt/ib_health_check.sh
 RUN chmod +x /opt/gpu_check_job.py
+RUN chmod +x /opt/gpu_burnin_monitor.py
 
 # Set the default command for K8s CronJob
 CMD ["python3", "/opt/gpu_check_job.py"]

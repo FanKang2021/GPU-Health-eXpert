@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Home, Wrench, ChevronLeft, ChevronRight, Monitor, Settings } from "lucide-react"
+import { Home, Wrench, ChevronLeft, ChevronRight, Monitor, Settings, Flame } from "lucide-react"
 
 interface SidebarNavigationProps {
   theme: "light" | "dark"
@@ -16,6 +16,7 @@ const navigationItems = {
   zh: [
     { id: "dashboard", label: "主页", icon: Home, description: "GPU节点检查概览" },
     { id: "troubleshooting", label: "自检专区", icon: Wrench, description: "节点诊断和故障排查" },
+    { id: "burn-in", label: "烧机专区", icon: Flame, description: "GPU烧机测试和实时监控" },
   ],
   en: [
     { id: "dashboard", label: "Dashboard", icon: Home, description: "GPU Node Inspection Overview" },
@@ -25,6 +26,7 @@ const navigationItems = {
       icon: Wrench,
       description: "Node Diagnosis & Troubleshooting",
     },
+    { id: "burn-in", label: "Burn-in Test", icon: Flame, description: "GPU Burn-in & Monitoring" },
   ],
 }
 
@@ -97,7 +99,7 @@ export function SidebarNavigation({ theme, language, currentPage, onPageChange }
                 <div className="flex flex-col items-start">
                   <span className="font-medium">{item.label}</span>
                   <span
-                    className={`text-xs ${
+                    className={`text-xs break-words leading-tight ${
                       isActive
                         ? theme === "dark"
                           ? "text-blue-200"
@@ -128,7 +130,7 @@ export function SidebarNavigation({ theme, language, currentPage, onPageChange }
             <Settings className="w-3 h-3" />
             <span>GPU Health Expert</span>
           </div>
-          <div className="mt-1">Version 1.1.7</div>
+          <div className="mt-1">Version 1.1.8</div>
         </div>
       )}
     </Card>

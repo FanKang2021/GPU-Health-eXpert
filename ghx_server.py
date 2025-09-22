@@ -19,6 +19,7 @@ import uuid
 import glob
 import queue
 import threading
+import yaml
 from typing import Dict, Any, List, Optional
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
@@ -4307,31 +4308,38 @@ def get_rdma_resource_info():
         }), 500
 
 def get_gpu_resource_name(node_name=None):
-    """自动检测GPU资源名称"""
+    """自动检测GPU资源名称 - 与自检专区保持一致的解析逻辑"""
     try:
         # 如果指定了节点名，只查询该节点
         if node_name:
-            cmd = ['kubectl-resource-view', 'node', node_name, '-t', 'gpu', '--no-format']
+            cmd = ['/usr/local/bin/kubectl-resource-view', 'node', node_name, '-t', 'gpu', '--no-format']
         else:
-            cmd = ['kubectl-resource-view', 'node', '-t', 'gpu']
+            cmd = ['/usr/local/bin/kubectl-resource-view', 'node', '-t', 'gpu']
         
         # 使用kubectl-resource-view获取GPU信息 - 增加超时时间到2分钟
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
         
         if result.returncode == 0:
-            lines = result.stdout.strip().split('\n')
-            for line in lines:
-                # 查找包含GPU MODEL的行
-                if 'GPU MODEL' in line:
-                    # 跳过表头行
+            # 使用与自检专区相同的解析逻辑
+            for line in result.stdout.split('\n'):
+                if line.strip() and '|' in line.strip():
+                    # 解析格式: | hd03-gpu2-0011 | 0 | 0% | 0 | 0% | nvidia.com/gpu-h200 |
+                    parts = [part.strip() for part in line.strip().split('|') if part.strip()]
+                    
+                    if len(parts) >= 6:
+                        current_node_name = parts[0]
+                        gpu_type = parts[5]
+                        
+                        # 过滤掉表头行
+                        if current_node_name.upper() in ['NODE', 'NVIDIA/GPU REQ', 'NVIDIA/GPU REQ(%)', 'NVIDIA/GPU LIM', 'NVIDIA/GPU LIM(%)', 'GPU MODEL']:
                     continue
-                if 'nvidia.com/gpu' in line or 'amd.com/gpu' in line:
-                    # 提取GPU资源名称前缀
-                    parts = line.split()
-                    for part in parts:
-                        if part.startswith('nvidia.com/gpu') or part.startswith('amd.com/gpu'):
-                            # 保留完整的GPU资源名称，包括型号后缀
-                            return part
+                        
+                        # 如果指定了节点名，只返回该节点的GPU类型
+                        if node_name and current_node_name == node_name:
+                            return gpu_type
+                        # 如果没有指定节点名，返回第一个找到的GPU类型
+                        elif not node_name and current_node_name.startswith('hd03-gpu2-'):
+                            return gpu_type
         
         # 如果kubectl-resource-view失败，尝试使用kubectl describe nodes
         result = subprocess.run([
@@ -4494,6 +4502,424 @@ def init_shared_directories():
         
     except Exception as e:
         logger.error(f"初始化共享目录失败: {e}")
+
+# ============================================================================
+# 烧机测试相关API
+# ============================================================================
+
+# 烧机测试状态存储
+burnin_jobs = {}  # job_id -> job_info
+burnin_metrics = {}  # job_id -> gpu_metrics
+burnin_clients = set()  # WebSocket客户端
+
+@app.route('/api/burnin/create', methods=['POST'])
+@get_rate_limit_decorator()
+def create_burnin_job():
+    """创建烧机测试Job"""
+    client_ip = request.remote_addr
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求数据不能为空'
+            }), 400
+        
+        # 验证必需参数
+        required_fields = ['nodeName', 'memoryType', 'memoryValue', 'duration']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'error': f'缺少必需参数: {field}'
+                }), 400
+        
+        node_name = data['nodeName']
+        memory_type = data['memoryType']  # 'fixed' or 'percentage'
+        memory_value = data['memoryValue']
+        duration = int(data['duration'])
+        
+        # 验证参数
+        if memory_type not in ['fixed', 'percentage']:
+            return jsonify({
+                'success': False,
+                'error': '内存类型必须是fixed或percentage'
+            }), 400
+        
+        if memory_type == 'percentage' and (memory_value < 1 or memory_value > 100):
+            return jsonify({
+                'success': False,
+                'error': '内存百分比必须在1-100之间'
+            }), 400
+        
+        if memory_type == 'fixed' and (memory_value < 1 or memory_value > 100000):
+            return jsonify({
+                'success': False,
+                'error': '固定内存值必须在1-100000MB之间'
+            }), 400
+        
+        if duration < 60 or duration > 86400:  # 1分钟到24小时（秒）
+            return jsonify({
+                'success': False,
+                'error': '测试时长必须在1-1440分钟之间'
+            }), 400
+        
+        # 生成Job ID
+        job_id = f"burnin-{int(time.time())}"
+        
+        # 构建内存参数
+        if memory_type == 'percentage':
+            memory_param = f"{memory_value}%"
+        else:
+            memory_param = f"{memory_value}MB"
+        
+        # 获取GPU资源名称
+        gpu_resource_name = get_gpu_resource_name(node_name)
+        if not gpu_resource_name:
+            return jsonify({
+                'success': False,
+                'error': f'无法获取节点 {node_name} 的GPU资源名称'
+            }), 400
+        
+        # 创建Job
+        job_info = {
+            'job_id': job_id,
+            'node_name': node_name,
+            'memory_type': memory_type,
+            'memory_value': memory_value,
+            'memory_param': memory_param,
+            'duration': duration,
+            'status': 'creating',
+            'created_at': datetime.now().isoformat(),
+            'progress': 0.0,
+            'gpu_metrics': {}
+        }
+        
+        # 存储Job信息
+        burnin_jobs[job_id] = job_info
+        burnin_metrics[job_id] = []
+        
+        # 在后台线程中创建Kubernetes Job
+        def create_k8s_job():
+            try:
+                success = create_burnin_k8s_job(job_info, gpu_resource_name)
+                if success:
+                    burnin_jobs[job_id]['status'] = 'running'
+                    logger.info(f"烧机测试Job创建成功: {job_id}")
+                else:
+                    burnin_jobs[job_id]['status'] = 'failed'
+                    logger.error(f"烧机测试Job创建失败: {job_id}")
+            except Exception as e:
+                burnin_jobs[job_id]['status'] = 'failed'
+                logger.error(f"创建烧机测试Job异常: {e}")
+        
+        # 启动后台线程
+        thread = threading.Thread(target=create_k8s_job)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'success': True,
+            'job_id': job_id,
+            'message': '烧机测试Job创建中...'
+        })
+        
+    except Exception as e:
+        logger.error(f"创建烧机测试Job失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'创建烧机测试Job失败: {str(e)}'
+        }), 500
+
+def create_burnin_k8s_job(job_info, gpu_resource_name):
+    """创建Kubernetes烧机测试Job"""
+    try:
+        if not kubernetes_client:
+            logger.error("Kubernetes客户端不可用")
+            return False
+        
+        v1, batch_v1 = kubernetes_client
+        
+        # 从挂载的文件读取Job模板
+        try:
+            with open('/app/burnin-job-template.yaml', 'r', encoding='utf-8') as f:
+                job_template = f.read()
+            logger.info("从挂载文件成功读取烧机测试Job模板")
+        except Exception as e:
+            logger.error(f"从挂载文件读取烧机测试Job模板失败: {e}")
+            # 回退到ConfigMap API读取
+            try:
+                configmap = v1.read_namespaced_config_map(
+                    name='job-template-config',
+                    namespace='gpu-health-expert'
+                )
+                job_template = configmap.data['burnin-job-template.yaml']
+                logger.info("回退到ConfigMap API读取烧机测试Job模板")
+            except Exception as configmap_e:
+                logger.error(f"ConfigMap API读取也失败: {configmap_e}")
+                # 最后回退到本地文件
+                try:
+                    with open('burnin-job-template.yaml', 'r', encoding='utf-8') as f:
+                        job_template = f.read()
+                    logger.info("最后回退到本地文件读取烧机测试Job模板")
+                except Exception as file_e:
+                    logger.error(f"所有读取方式都失败: {file_e}")
+                    return False
+        
+        # 替换模板变量
+        job_yaml = job_template.format(
+            JOB_ID=job_info['job_id'],
+            BASE_JOB_ID=job_info['job_id'],
+            NODE_NAME=job_info['node_name'],
+            MEMORY_PARAM=job_info['memory_param'],
+            DURATION=job_info['duration'],
+            GPU_RESOURCE_NAME=gpu_resource_name
+        )
+        
+        # 解析YAML
+        import yaml
+        job_spec = yaml.safe_load(job_yaml)
+        
+        # 创建Job
+        batch_v1.create_namespaced_job(
+            namespace='gpu-health-expert',
+            body=job_spec
+        )
+        
+        logger.info(f"Kubernetes烧机测试Job创建成功: {job_info['job_id']}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"创建Kubernetes烧机测试Job失败: {e}")
+        return False
+
+@app.route('/api/burnin/jobs', methods=['GET'])
+@get_rate_limit_decorator()
+def get_burnin_jobs():
+    """获取烧机测试Job列表"""
+    client_ip = request.remote_addr
+    
+    try:
+        # 返回Job列表
+        jobs = []
+        for job_id, job_info in burnin_jobs.items():
+            jobs.append({
+                'job_id': job_id,
+                'node_name': job_info['node_name'],
+                'memory_param': job_info['memory_param'],
+                'duration': job_info['duration'],
+                'status': job_info['status'],
+                'progress': job_info['progress'],
+                'created_at': job_info['created_at'],
+                'gpu_count': len(job_info['gpu_metrics'])
+            })
+        
+        # 按创建时间倒序排列
+        jobs.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'jobs': jobs
+        })
+        
+    except Exception as e:
+        logger.error(f"获取烧机测试Job列表失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'获取烧机测试Job列表失败: {str(e)}'
+        }), 500
+
+@app.route('/api/burnin/jobs/<job_id>', methods=['GET'])
+@get_rate_limit_decorator()
+def get_burnin_job_status(job_id):
+    """获取烧机测试Job状态"""
+    client_ip = request.remote_addr
+    
+    try:
+        if job_id not in burnin_jobs:
+            return jsonify({
+                'success': False,
+                'error': 'Job不存在'
+            }), 404
+        
+        job_info = burnin_jobs[job_id]
+        
+        return jsonify({
+            'success': True,
+            'job': job_info
+        })
+        
+    except Exception as e:
+        logger.error(f"获取烧机测试Job状态失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'获取烧机测试Job状态失败: {str(e)}'
+        }), 500
+
+@app.route('/api/burnin/stop', methods=['POST'])
+@get_rate_limit_decorator()
+def stop_burnin_job():
+    """停止烧机测试Job"""
+    client_ip = request.remote_addr
+    
+    try:
+        data = request.get_json()
+        if not data or 'job_id' not in data:
+            return jsonify({
+                'success': False,
+                'error': '缺少job_id参数'
+            }), 400
+        
+        job_id = data['job_id']
+        
+        if job_id not in burnin_jobs:
+            return jsonify({
+                'success': False,
+                'error': 'Job不存在'
+            }), 404
+        
+        # 更新Job状态
+        burnin_jobs[job_id]['status'] = 'stopping'
+        
+        # 删除Kubernetes Job
+        success = delete_job_with_kubernetes_client(job_id)
+        
+        if success:
+            burnin_jobs[job_id]['status'] = 'stopped'
+            logger.info(f"烧机测试Job停止成功: {job_id}")
+        else:
+            burnin_jobs[job_id]['status'] = 'stop_failed'
+            logger.error(f"烧机测试Job停止失败: {job_id}")
+        
+        return jsonify({
+            'success': success,
+            'message': '烧机测试Job停止成功' if success else '烧机测试Job停止失败'
+        })
+        
+    except Exception as e:
+        logger.error(f"停止烧机测试Job失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'停止烧机测试Job失败: {str(e)}'
+        }), 500
+
+@app.route('/api/burnin/metrics', methods=['POST'])
+def receive_burnin_metrics():
+    """接收烧机测试指标"""
+    try:
+        data = request.get_json()
+        logger.info(f"收到烧机测试指标数据: {data}")
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求数据不能为空'
+            }), 400
+        
+        job_id = data.get('job_id')
+        if not job_id:
+            return jsonify({
+                'success': False,
+                'error': '缺少job_id参数'
+            }), 400
+        
+        # 更新Job指标
+        if job_id in burnin_jobs:
+            # 更新整个节点数据
+            burnin_jobs[job_id].update({
+                'progress': data.get('progress', 0),
+                'gpus': data.get('gpus', []),
+                'total_gflops': data.get('total_gflops', 0),
+                'total_errors': data.get('total_errors', 0),
+                'avg_temperature': data.get('avg_temperature', 0),
+                'gpu_count': data.get('gpu_count', 0),
+                'last_update': data.get('timestamp', datetime.now().isoformat())
+            })
+            
+            # 更新状态
+            if data.get('status') == 'completed':
+                burnin_jobs[job_id]['status'] = 'completed'
+            elif data.get('status') == 'failed':
+                burnin_jobs[job_id]['status'] = 'failed'
+        
+        # 存储到指标历史
+        if job_id not in burnin_metrics:
+            burnin_metrics[job_id] = []
+        
+        burnin_metrics[job_id].append({
+            'timestamp': datetime.now().isoformat(),
+            'data': data
+        })
+        
+        # 保持最近1000条记录
+        if len(burnin_metrics[job_id]) > 1000:
+            burnin_metrics[job_id] = burnin_metrics[job_id][-1000:]
+        
+        # 通知WebSocket客户端
+        notify_burnin_status_change(job_id, 'metrics_update', data)
+        
+        return jsonify({
+            'success': True,
+            'message': '指标接收成功'
+        })
+        
+    except Exception as e:
+        logger.error(f"接收烧机测试指标失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'接收烧机测试指标失败: {str(e)}'
+        }), 500
+
+@app.route('/api/burnin/stream', methods=['GET'])
+def burnin_status_stream():
+    """烧机测试状态流"""
+    def generate():
+        client_queue = queue.Queue()
+        burnin_clients.add(client_queue)
+        logger.info(f"新的烧机测试SSE客户端已连接，当前连接数: {len(burnin_clients)}")
+        
+        try:
+            while True:
+                try:
+                    # 发送心跳
+                    yield f"data: {json.dumps({'type': 'heartbeat', 'timestamp': datetime.now().isoformat()})}\n\n"
+                    
+                    # 检查队列中的消息
+                    try:
+                        message = client_queue.get(timeout=30)
+                        yield f"data: {json.dumps(message)}\n\n"
+                    except queue.Empty:
+                        continue
+                        
+                except Exception as e:
+                    logger.error(f"烧机测试SSE流错误: {e}")
+                    break
+        finally:
+            burnin_clients.discard(client_queue)
+            logger.info(f"烧机测试SSE客户端断开连接，当前连接数: {len(burnin_clients)}")
+    
+    return Response(generate(), mimetype='text/event-stream')
+
+def notify_burnin_status_change(job_id, status, data=None):
+    """通知烧机测试状态变化"""
+    global burnin_clients
+    
+    message = {
+        "type": "burnin_status_change",
+        "job_id": job_id,
+        "status": status,
+        "timestamp": datetime.now().isoformat(),
+        "data": data or {}
+    }
+    
+    # 发送给所有连接的客户端
+    for client_queue in list(burnin_clients):
+        try:
+            client_queue.put(message)
+        except Exception as e:
+            logger.error(f"发送烧机测试状态变化通知失败: {e}")
+            burnin_clients.discard(client_queue)
 
 if __name__ == '__main__':
     # 初始化数据库

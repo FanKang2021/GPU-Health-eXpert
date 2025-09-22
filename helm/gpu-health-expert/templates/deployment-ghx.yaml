@@ -42,6 +42,10 @@ spec:
               mountPath: /app/job-template.yaml
               subPath: job-template.yaml
               readOnly: true
+            - name: job-template-config
+              mountPath: /app/burnin-job-template.yaml
+              subPath: burnin-job-template.yaml
+              readOnly: true
       volumes:
         - name: shared-results
           persistentVolumeClaim:

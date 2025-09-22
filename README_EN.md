@@ -440,28 +440,6 @@ kubectl get events -n gpu-health-expert --sort-by='.lastTimestamp'
 kubectl exec -it deployment/ghx-server -n gpu-health-expert -- /bin/bash
 ```
 
-## 📈 Changelog
-
-### latest (2025-09-03) - Initial Release
-
-#### 🎉 Architecture Refactoring
-- **Unified Service**: Merged `gpu_collector_service` and `gpu_cli` into `ghx_server`
-- **Modern Frontend**: Upgraded to Next.js 15 and React 19
-- **Intelligent Scheduling**: Implemented Kubernetes Informer mechanism
-- **SSE Communication**: Real-time status updates and notifications
-
-#### ✨ New Features
-- **Manual Diagnostics**: Support for on-demand GPU diagnostic tasks
-- **Real-time Monitoring**: Job status real-time updates and progress display
-- **Intelligent Caching**: 5-second caching mechanism for improved performance
-- **Rate Limiting**: Smart API rate limiting protection
-
-#### 🔧 Technical Improvements
-- **Database Optimization**: Added unique constraints and indexes
-- **Error Handling**: Comprehensive exception handling and logging
-- **Code Refactoring**: Modular design for improved maintainability
-
-
 ## 🤝 Contributing
 
 We welcome all forms of contributions!

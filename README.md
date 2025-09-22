@@ -440,28 +440,6 @@ kubectl get events -n gpu-health-expert --sort-by='.lastTimestamp'
 kubectl exec -it deployment/ghx-server -n gpu-health-expert -- /bin/bash
 ```
 
-## 📈 更新日志
-
-### latest (2025-09-03) - 初始版本
-
-#### 🎉 架构重构
-- **统一服务**: 合并`gpu_collector_service`和`gpu_cli`为`ghx_server`
-- **现代化前端**: 升级到Next.js 15和React 19
-- **智能调度**: 实现Kubernetes Informer机制
-- **SSE通信**: 实时状态更新和通知
-
-#### ✨ 新功能
-- **手动诊断**: 支持按需创建GPU诊断任务
-- **实时监控**: Job状态实时更新和进度显示
-- **智能缓存**: 5秒缓存机制，提升性能
-- **频率限制**: 智能API限流保护
-
-#### 🔧 技术改进
-- **数据库优化**: 添加唯一约束和索引
-- **错误处理**: 完善的异常处理和日志记录
-- **代码重构**: 模块化设计，提高可维护性
-
-
 
 ## 🤝 贡献指南
 

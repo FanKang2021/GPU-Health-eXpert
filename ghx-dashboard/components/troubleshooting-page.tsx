@@ -2405,7 +2405,7 @@ ${executionLog}
                           {node.nodeName}
                         </div>
                         <div className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
-                          {node.gpuType} • <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{node.gpuRequested}</span> GPUs
+                          {node.gpuType} • <span className={theme === "dark" ? "text-white" : "text-gray-900"}>{node.nodeStatus === 'idle' ? 8 : 0}</span> GPUs
                         </div>
                       </div>
                       <Badge variant="secondary" className="text-green-600 bg-green-100">

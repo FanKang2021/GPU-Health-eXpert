@@ -15,6 +15,7 @@ import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { DashboardContent } from "@/components/dashboard-content"
 import TroubleshootingPage from "@/components/troubleshooting-page" // Import TroubleshootingPage component
+import BurnInPage from "@/components/burn-in-page" // Import BurnInPage component
 
 // 国际化文本配置
 const i18n = {
@@ -87,6 +88,8 @@ const i18n = {
     refreshStatus: "刷新",
     // 新增的国际化文本
     selfServiceDiagnostic: "自助故障诊断",
+    burnInTest: "烧机专区",
+    burnInTestDesc: "GPU烧机测试和实时监控",
     selfServiceDiagnosticDesc: "选择空闲节点和检查项目进行诊断（请先刷新GPU节点资源状态获取最新的空闲节点）",
     selectIdleNodes: "选择空闲节点",
     selectCheckItems: "选择检查项目",
@@ -308,6 +311,8 @@ const i18n = {
     refreshStatus: "Refresh Status",
     // 新增的国际化文本
     selfServiceDiagnostic: "Self-Service Troubleshooting",
+    burnInTest: "Burn-in Test",
+    burnInTestDesc: "GPU Burn-in Test and Real-time Monitoring",
     selfServiceDiagnosticDesc: "Select idle nodes and check items for diagnosis (please refresh GPU node resource status to get the latest idle nodes)",
     selectIdleNodes: "Select Idle Nodes",
     selectCheckItems: "Select Check Items",
@@ -585,6 +590,8 @@ export default function GhxDashboard() {
         return <DashboardContent theme={theme} language={language} t={t} />
       case "troubleshooting":
         return <TroubleshootingPage theme={theme} language={language} t={t} />
+      case "burn-in":
+        return <BurnInPage theme={theme} language={language} t={t} />
       default:
         return <DashboardContent theme={theme} language={language} t={t} />
     }

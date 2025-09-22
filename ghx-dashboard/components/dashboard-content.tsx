@@ -586,7 +586,7 @@ ${log.executionLog || '无日志'}
               {/* DCGM诊断级别详细说明表格 */}
               <div className="mt-3">
                 <p className={`text-xs mb-2 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
-                  DCGM诊断级别详细说明：
+                  {t.dcgmLevelDescription}
                 </p>
                 <div className={`rounded-md border overflow-x-auto transition-colors duration-200 ${
                   theme === "dark" ? "border-gray-700" : "border-gray-200"

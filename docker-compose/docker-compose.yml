@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # GHX Server - 后端API服务
+  ghx-server:
+    build:
+      context: ..
+      dockerfile: Dockerfile.ghx-server
+    container_name: ghx-server
+    ports:
+      - "${GHX_SERVER_PORT:-5000}:5000"
+    volumes:
+      # 挂载kubeconfig文件
+      - ${KUBECONFIG_PATH:-~/.kube/config}:/root/.kube/config:ro
+      # 挂载模板文件
+      - ./job-template.yaml:/app/templates/job-template.yaml:ro
+      - ./burnin-job-template.yaml:/app/templates/burnin-job-template.yaml:ro
+      # 挂载GPU基准测试配置（JSON格式给后端使用）
+      - ./gpu-benchmarks.json:/config/gpu-benchmarks.json:ro
+      # 挂载共享存储目录
+      - ghx-shared-data:/shared
+      # 挂载日志目录
+      - ghx-logs:/var/log
+    environment:
+      - KUBECONFIG=/root/.kube/config
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - FLASK_DEBUG=${FLASK_DEBUG:-0}
+      - K8S_NAMESPACE=${K8S_NAMESPACE:-gpu-health-expert}
+      - GPU_RESOURCE_NAME=${GPU_RESOURCE_NAME:-nvidia.com/gpu}
+      - RDMA_RESOURCES=${RDMA_RESOURCES:-rdma/hca_shared:1}
+    networks:
+      - ghx-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # GHX Dashboard - 前端Web界面
+  ghx-dashboard:
+    build:
+      context: ../ghx-dashboard
+      dockerfile: Dockerfile.ghx-dashboard
+    container_name: ghx-dashboard
+    ports:
+      - "${GHX_DASHBOARD_PORT:-3000}:3000"
+    volumes:
+      # 挂载GPU基准测试配置（JavaScript格式给前端使用）
+      - ./gpu-benchmarks.js:/app/public/gpu-benchmarks.js:ro
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:${GHX_SERVER_PORT:-5000}
+      - NEXT_PUBLIC_WS_URL=ws://localhost:${GHX_SERVER_PORT:-5000}
+    networks:
+      - ghx-network
+    restart: unless-stopped
+    depends_on:
+      - ghx-server
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  # 共享数据卷 - 用于存储GPU检查结果
+  ghx-shared-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${SHARED_DATA_PATH:-./data/shared}
+  
+  # 日志数据卷
+  ghx-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${LOGS_PATH:-./data/logs}
+
+networks:
+  ghx-network:
+    driver: bridge

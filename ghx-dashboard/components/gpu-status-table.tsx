@@ -482,7 +482,7 @@ export function GpuStatusTable({
                       {node.nodeName || node.hostname}
                     </TableCell>
                     <TableCell className="text-foreground">
-                      {getGpuTypeDisplayName(node.gpuModel || "")}
+                      {getGpuTypeDisplayName(node.gpuType || "")}
                     </TableCell>
                     <TableCell className="text-center font-mono text-foreground">
                       {node.gpuRequested || 0}

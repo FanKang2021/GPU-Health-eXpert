@@ -2274,39 +2274,117 @@ def get_gpu_requested_count_kubectl(node_name):
         logger.error(f"kubectl获取节点 {node_name} 已请求GPU数量失败: {e}")
         return 0
 
+def get_gpu_info_from_kubectl_resource_view(node_name=None):
+    """使用kubectl-resource-view工具统一获取GPU信息"""
+    try:
+        # 如果指定了节点名，只查询该节点
+        if node_name:
+            cmd = ['/usr/local/bin/kubectl-resource-view', 'node', node_name, '-t', 'gpu', '--no-format']
+        else:
+            cmd = ['/usr/local/bin/kubectl-resource-view', 'node', '-t', 'gpu', '--no-format']
+        
+        # 使用kubectl-resource-view获取GPU信息 - 增加超时时间到2分钟
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        
+        if result.returncode == 0:
+            gpu_info_map = {}
+            lines = result.stdout.strip().split('\n')
+            
+            # 跳过表头行
+            data_lines = lines[1:] if len(lines) > 1 else []
+            
+            for line in data_lines:
+                if line.strip():
+                    # 解析格式: hd03-gpu2-0011          0               0%                      0               0%                      nvidia.com/gpu-h200
+                    # 使用正则表达式或固定位置解析
+                    import re
+                    
+                    # 使用正则表达式匹配节点名和GPU信息
+                    # 节点名通常在行首，GPU类型在GPU MODEL列
+                    match = re.match(r'^(\S+)\s+(\d+)\s+\d+%\s+(\d+)\s+\d+%\s+(nvidia\.com/gpu-\S+|amd\.com/gpu-\S+|N/A)', line)
+                    
+                    if match:
+                        current_node_name = match.group(1)
+                        gpu_requested = int(match.group(2))
+                        gpu_limit = int(match.group(3))
+                        gpu_type = match.group(4)
+                        
+                        # 过滤掉表头行和没有GPU的节点
+                        if current_node_name.upper() in ['NODE', 'NVIDIA/GPU REQ', 'NVIDIA/GPU REQ(%)', 'NVIDIA/GPU LIM', 'NVIDIA/GPU LIM(%)', 'GPU MODEL']:
+                            continue
+                        
+                        # 跳过没有GPU的节点
+                        if gpu_type == 'N/A':
+                            continue
+                        
+                        gpu_info_map[current_node_name] = {
+                            'gpu_type': gpu_type,
+                            'gpu_requested': gpu_requested,
+                            'gpu_limit': gpu_limit,
+                            'gpu_count': gpu_limit  # GPU总数等于限制数
+                        }
+            
+            # 如果指定了节点名，只返回该节点的信息
+            if node_name and node_name in gpu_info_map:
+                return gpu_info_map[node_name]
+            elif node_name:
+                # 如果指定了节点名但没找到，返回默认值
+                return {
+                    'gpu_type': 'Unknown',
+                    'gpu_requested': 0,
+                    'gpu_limit': 0,
+                    'gpu_count': 0
+                }
+            else:
+                # 如果没有指定节点名，返回所有节点的信息
+                return gpu_info_map
+        
+        # 如果kubectl-resource-view失败，返回默认值
+        return {
+            'gpu_type': 'Unknown',
+            'gpu_requested': 0,
+            'gpu_limit': 0,
+            'gpu_count': 0
+        }
+        
+    except Exception as e:
+        logger.warning(f"使用kubectl-resource-view获取GPU信息失败: {e}")
+        return {
+            'gpu_type': 'Unknown',
+            'gpu_requested': 0,
+            'gpu_limit': 0,
+            'gpu_count': 0
+        }
+
 def parse_node_info(node):
-    """解析节点信息"""
+    """解析节点信息 - 统一使用kubectl-resource-view工具获取GPU信息"""
     try:
         # 获取节点基本信息
         node_name = node.metadata.name
         is_ready = any(condition.type == 'Ready' and condition.status == 'True' 
                       for condition in node.status.conditions) if node.status and node.status.conditions else False
         
-        # 获取GPU信息
-        gpu_count = 0
-        gpu_type = 'Unknown'
-        if node.status and node.status.allocatable:
-            for key, value in node.status.allocatable.items():
-                if 'nvidia.com/gpu' in key:
-                    try:
-                        gpu_count = int(value)
-                        gpu_type = key.replace('nvidia.com/', '')
-                        break
-                    except ValueError:
-                        pass
-        
-        # 获取已请求的GPU数量（通过查询Pod资源使用情况）
-        gpu_requested = get_gpu_requested_count(node_name)
+        # 使用kubectl-resource-view工具统一获取GPU信息
+        gpu_info = get_gpu_info_from_kubectl_resource_view(node_name)
         
         # 确定节点状态
-        node_status = 'idle' if gpu_requested == 0 else 'busy'
+        node_status = 'idle' if gpu_info['gpu_requested'] == 0 else 'busy'
+        
+        # 确保GPU类型格式正确（完整的资源名称）
+        gpu_type = gpu_info['gpu_type']
+        if gpu_type and not gpu_type.startswith('nvidia.com/') and not gpu_type.startswith('amd.com/') and gpu_type != 'Unknown':
+            # 如果GPU类型不是完整格式，补充前缀
+            if gpu_type.startswith('gpu-'):
+                gpu_type = f'nvidia.com/{gpu_type}'
+            else:
+                gpu_type = f'nvidia.com/gpu-{gpu_type}'
         
         node_info = {
             'nodeName': node_name,
             'gpuType': gpu_type,
-            'gpuRequested': gpu_requested,
+            'gpuRequested': gpu_info['gpu_requested'],
             'nodeStatus': node_status,
-            'gpuCount': gpu_count,
+            'gpuCount': gpu_info['gpu_count'],
             'status': 'Ready' if is_ready else 'NotReady',
             'timestamp': datetime.now().isoformat()
         }
@@ -2366,7 +2444,7 @@ def has_gpu_resources_kubectl(node):
         return False
 
 def parse_node_info_kubectl(node):
-    """解析节点信息 (kubectl版本)"""
+    """解析节点信息 (kubectl版本) - 统一使用kubectl-resource-view工具获取GPU信息"""
     try:
         # 获取节点基本信息
         node_name = node.get('metadata', {}).get('name', 'Unknown')
@@ -2379,31 +2457,27 @@ def parse_node_info_kubectl(node):
                 is_ready = True
                 break
         
-        # 获取GPU信息
-        gpu_count = 0
-        gpu_type = 'Unknown'
-        allocatable = node.get('status', {}).get('allocatable', {})
-        for key, value in allocatable.items():
-            if 'nvidia.com/gpu' in key:
-                try:
-                    gpu_count = int(value)
-                    gpu_type = key.replace('nvidia.com/', '')
-                    break
-                except ValueError:
-                    pass
-        
-        # 获取已请求的GPU数量
-        gpu_requested = get_gpu_requested_count_kubectl(node_name)
+        # 使用kubectl-resource-view工具统一获取GPU信息
+        gpu_info = get_gpu_info_from_kubectl_resource_view(node_name)
         
         # 确定节点状态
-        node_status = 'idle' if gpu_requested == 0 else 'busy'
+        node_status = 'idle' if gpu_info['gpu_requested'] == 0 else 'busy'
+        
+        # 确保GPU类型格式正确（完整的资源名称）
+        gpu_type = gpu_info['gpu_type']
+        if gpu_type and not gpu_type.startswith('nvidia.com/') and not gpu_type.startswith('amd.com/') and gpu_type != 'Unknown':
+            # 如果GPU类型不是完整格式，补充前缀
+            if gpu_type.startswith('gpu-'):
+                gpu_type = f'nvidia.com/{gpu_type}'
+            else:
+                gpu_type = f'nvidia.com/gpu-{gpu_type}'
         
         node_info = {
             'nodeName': node_name,
             'gpuType': gpu_type,
-            'gpuRequested': gpu_requested,
+            'gpuRequested': gpu_info['gpu_requested'],
             'nodeStatus': node_status,
-            'gpuCount': gpu_count,
+            'gpuCount': gpu_info['gpu_count'],
             'status': 'Ready' if is_ready else 'NotReady',
             'timestamp': datetime.now().isoformat()
         }
@@ -4321,18 +4395,30 @@ def get_gpu_resource_name(node_name=None):
         
         if result.returncode == 0:
             # 使用与自检专区相同的解析逻辑
-            for line in result.stdout.split('\n'):
-                if line.strip() and '|' in line.strip():
-                    # 解析格式: | hd03-gpu2-0011 | 0 | 0% | 0 | 0% | nvidia.com/gpu-h200 |
-                    parts = [part.strip() for part in line.strip().split('|') if part.strip()]
+            lines = result.stdout.strip().split('\n')
+            
+            # 跳过表头行
+            data_lines = lines[1:] if len(lines) > 1 else []
+            
+            for line in data_lines:
+                if line.strip():
+                    # 解析格式: hd03-gpu2-0011          0               0%                      0               0%                      nvidia.com/gpu-h200
+                    import re
                     
-                    if len(parts) >= 6:
-                        current_node_name = parts[0]
-                        gpu_type = parts[5]
+                    # 使用正则表达式匹配节点名和GPU信息
+                    match = re.match(r'^(\S+)\s+(\d+)\s+\d+%\s+(\d+)\s+\d+%\s+(nvidia\.com/gpu-\S+|amd\.com/gpu-\S+|N/A)', line)
+                    
+                    if match:
+                        current_node_name = match.group(1)
+                        gpu_type = match.group(4)
                         
-                        # 过滤掉表头行
+                        # 过滤掉表头行和没有GPU的节点
                         if current_node_name.upper() in ['NODE', 'NVIDIA/GPU REQ', 'NVIDIA/GPU REQ(%)', 'NVIDIA/GPU LIM', 'NVIDIA/GPU LIM(%)', 'GPU MODEL']:
-                    continue
+                            continue
+                        
+                        # 跳过没有GPU的节点
+                        if gpu_type == 'N/A':
+                            continue
                         
                         # 如果指定了节点名，只返回该节点的GPU类型
                         if node_name and current_node_name == node_name:

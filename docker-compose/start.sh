@@ -60,6 +60,25 @@ check_env_file() {
     fi
 }
 
+# 生成前端环境配置文件
+generate_env_js() {
+    print_message $BLUE "生成前端环境配置文件..."
+    
+    # 读取环境变量
+    source .env 2>/dev/null || true
+    
+    # 设置默认值
+    GHX_SERVER_PORT=${GHX_SERVER_PORT:-5000}
+    
+    # 生成env.js文件
+    cat > env.js << EOF
+// 环境配置 - 动态设置API地址
+window.NEXT_PUBLIC_API_URL = "http://localhost:${GHX_SERVER_PORT}";
+EOF
+    
+    print_message $GREEN "env.js 文件已生成，API地址: http://localhost:${GHX_SERVER_PORT}"
+}
+
 # 检查kubeconfig文件
 check_kubeconfig() {
     local kubeconfig_path=$(grep KUBECONFIG_PATH .env 2>/dev/null | cut -d'=' -f2 | tr -d ' ' || echo "~/.kube/config")
@@ -112,6 +131,7 @@ main() {
     check_dependencies
     create_directories
     check_env_file
+    generate_env_js
     check_kubeconfig
     build_images
     start_services

@@ -39,6 +39,16 @@ if not exist ".env" (
     )
 )
 
+REM 生成前端环境配置文件
+echo 生成前端环境配置文件...
+for /f "tokens=2 delims==" %%a in ('findstr "GHX_SERVER_PORT" .env 2^>nul') do set GHX_SERVER_PORT=%%a
+if not defined GHX_SERVER_PORT set GHX_SERVER_PORT=5000
+
+echo // 环境配置 - 动态设置API地址 > env.js
+echo window.NEXT_PUBLIC_API_URL = "http://localhost:%GHX_SERVER_PORT%"; >> env.js
+
+echo env.js 文件已生成，API地址: http://localhost:%GHX_SERVER_PORT%
+
 REM 构建镜像
 echo 构建 Docker 镜像...
 docker-compose build --no-cache

@@ -7,8 +7,7 @@ services:
       context: ..
       dockerfile: Dockerfile.ghx-server
     container_name: ghx-server
-    ports:
-      - "${GHX_SERVER_PORT:-5000}:5000"
+    network_mode: host
     volumes:
       # 挂载kubeconfig文件
       - ${KUBECONFIG_PATH:-~/.kube/config}:/root/.kube/config:ro
@@ -26,10 +25,7 @@ services:
       - FLASK_ENV=${FLASK_ENV:-production}
       - FLASK_DEBUG=${FLASK_DEBUG:-0}
       - K8S_NAMESPACE=${K8S_NAMESPACE:-gpu-health-expert}
-      - GPU_RESOURCE_NAME=${GPU_RESOURCE_NAME:-nvidia.com/gpu}
-      - RDMA_RESOURCES=${RDMA_RESOURCES:-rdma/hca_shared:1}
-    networks:
-      - ghx-network
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
@@ -44,17 +40,15 @@ services:
       context: ../ghx-dashboard
       dockerfile: Dockerfile.ghx-dashboard
     container_name: ghx-dashboard
-    ports:
-      - "${GHX_DASHBOARD_PORT:-3000}:3000"
+    network_mode: host
     volumes:
       # 挂载GPU基准测试配置（JavaScript格式给前端使用）
       - ./gpu-benchmarks.js:/app/public/gpu-benchmarks.js:ro
+      # 动态生成env.js文件
+      - ./env.js:/app/public/env.js:ro
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:${GHX_SERVER_PORT:-5000}
-      - NEXT_PUBLIC_WS_URL=ws://localhost:${GHX_SERVER_PORT:-5000}
-    networks:
-      - ghx-network
+      - GHX_SERVER_PORT=${GHX_SERVER_PORT:-5000}
     restart: unless-stopped
     depends_on:
       - ghx-server
@@ -82,6 +76,4 @@ volumes:
       o: bind
       device: ${LOGS_PATH:-./data/logs}
 
-networks:
-  ghx-network:
-    driver: bridge
+# 使用host网络模式，不需要自定义网络

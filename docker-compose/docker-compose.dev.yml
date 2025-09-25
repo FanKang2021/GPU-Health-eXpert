@@ -54,10 +54,10 @@ services:
       - /app/.next
       # 挂载GPU基准测试配置（JavaScript格式给前端使用）
       - ./gpu-benchmarks.js:/app/public/gpu-benchmarks.js:ro
+      # 动态生成env.js文件
+      - ./env.js:/app/public/env.js:ro
     environment:
       - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://localhost:${GHX_SERVER_PORT:-5000}
-      - NEXT_PUBLIC_WS_URL=ws://localhost:${GHX_SERVER_PORT:-5000}
       - WATCHPACK_POLLING=true
     networks:
       - ghx-network

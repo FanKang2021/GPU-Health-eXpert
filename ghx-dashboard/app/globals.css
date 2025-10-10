@@ -311,3 +311,94 @@
   background: var(--popover);
   color: var(--popover-foreground);
 }
+
+/* 科技感Checkbox增强样式 - 大幅提升可见性 */
+[data-slot="checkbox"] {
+  position: relative;
+  overflow: hidden;
+  /* 强制高对比度边框 */
+  border: 2px solid rgba(59, 130, 246, 0.8) !important;
+  /* 半透明白色背景，确保在深色背景下可见 */
+  background: rgba(255, 255, 255, 0.15) !important;
+  /* 强阴影效果 */
+  box-shadow: 
+    0 0 0 2px rgba(59, 130, 246, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(59, 130, 246, 0.2) !important;
+}
+
+[data-slot="checkbox"]::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+  opacity: 0;
+  transition: all 0.3s ease;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+[data-slot="checkbox"]:hover {
+  /* 悬停时增强效果 */
+  border-color: rgba(59, 130, 246, 1) !important;
+  background: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 
+    0 0 0 3px rgba(59, 130, 246, 0.5),
+    0 6px 16px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(59, 130, 246, 0.4) !important;
+  transform: scale(1.05);
+}
+
+[data-slot="checkbox"]:hover::before {
+  opacity: 1;
+}
+
+[data-slot="checkbox"][data-state="checked"] {
+  /* 选中状态 - 蓝色背景 */
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 
+    0 0 0 3px rgba(59, 130, 246, 0.6),
+    0 6px 16px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(59, 130, 246, 0.5) !important;
+}
+
+[data-slot="checkbox"][data-state="checked"]::before {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
+  opacity: 1;
+}
+
+/* 聚焦状态 */
+[data-slot="checkbox"]:focus-visible {
+  outline: none !important;
+  border-color: rgba(59, 130, 246, 1) !important;
+  box-shadow: 
+    0 0 0 4px rgba(59, 130, 246, 0.3),
+    0 6px 16px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Checkbox指示器增强 */
+[data-slot="checkbox-indicator"] {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  font-weight: 900;
+}
+
+/* 特殊样式：烧机专区的Checkbox */
+.burnin-checkbox {
+  border-color: rgba(59, 130, 246, 0.9) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.burnin-checkbox:hover {
+  border-color: rgba(59, 130, 246, 1) !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.burnin-checkbox[data-state="checked"] {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}

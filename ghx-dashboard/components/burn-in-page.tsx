@@ -870,7 +870,7 @@ export default function BurnInPage({ language, t }: BurnInPageProps) {
                         localStorage.setItem('burnin-polling-enabled', enabled.toString())
                       }
                     }}
-                    className="w-4 h-4 text-tech-orange accent-tech-orange"
+                    className="w-6 h-6 border-2 border-tech-orange/90 bg-white/15 data-[state=checked]:bg-tech-orange data-[state=checked]:border-tech-orange hover:border-tech-orange hover:shadow-glow hover:scale-110 transition-all duration-300"
                   />
                   <label 
                     htmlFor="polling-enabled" 
@@ -1040,7 +1040,7 @@ export default function BurnInPage({ language, t }: BurnInPageProps) {
                         <Checkbox
                           checked={selectedNodes.includes(node.nodeId)}
                           onCheckedChange={(checked) => handleNodeSelection(node.nodeId, checked as boolean)}
-                          className="w-4 h-4 text-tech-blue accent-tech-blue"
+                          className="burnin-checkbox w-6 h-6"
                         />
                         <h3 className="font-bold text-lg text-foreground group-hover:text-tech-blue transition-colors">
                           {node.nodeName}

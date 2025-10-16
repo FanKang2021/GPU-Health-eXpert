@@ -541,3 +541,7 @@ kubectl exec -it deployment/ghx-server -n gpu-health-expert -- /bin/bash
 Made with ❤️ by the GHX Team
 
 </div>
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=FanKang2021/GPU-Health-eXpert&type=date&legend=top-left)](https://www.star-history.com/#FanKang2021/GPU-Health-eXpert&type=date&legend=top-left)

@@ -537,4 +537,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Made with ❤️ by the GHX Team
 
+
 </div>
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=FanKang2021/GPU-Health-eXpert&type=date&legend=top-left)](https://www.star-history.com/#FanKang2021/GPU-Health-eXpert&type=date&legend=top-left)

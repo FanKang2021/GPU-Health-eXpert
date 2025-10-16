@@ -37,7 +37,7 @@ const defaultGpuBenchmarks = {
 // 检查项目配置
 const checkItems = {
   zh: [
-    { id: "bandwidthTest", label: "Bandwidth Test", description: "测试GPU内存带宽性能，评估数据传输效率" },
+    { id: "nvbandwidthTest", label: "nvBandwidthTest", description: "测试CPU与GPU间内存拷贝带宽性能，使用nvbandwidth工具评估数据传输效率" },
     {
       id: "p2pBandwidthLatencyTest",
       label: "p2pBandwidthLatencyTest",
@@ -49,9 +49,9 @@ const checkItems = {
   ],
   en: [
     {
-      id: "bandwidthTest",
-      label: "Bandwidth Test",
-      description: "Test GPU memory bandwidth performance, evaluate data transfer efficiency",
+      id: "nvbandwidthTest",
+      label: "nvBandwidthTest",
+      description: "Test CPU-GPU memory copy bandwidth performance using nvbandwidth tool, evaluate data transfer efficiency",
     },
     {
       id: "p2pBandwidthLatencyTest",
@@ -142,7 +142,7 @@ export default function TroubleshootingPage({ language, t }: TroubleshootingPage
   // 节点选择相关状态
   const [selectedNodes, setSelectedNodes] = useState<string[]>([])
   const [selectedCheckItems, setSelectedCheckItems] = useState<string[]>([
-    "bandwidthTest", 
+    "nvbandwidthTest", 
     "p2pBandwidthLatencyTest", 
     "ncclTests", 
     "dcgmDiag", 
@@ -352,9 +352,9 @@ export default function TroubleshootingPage({ language, t }: TroubleshootingPage
     if (!benchmark) return 'Unknown'
     
     // 检查带宽测试 - 只检查有数值的测试
-    const bandwidthTest = result.bandwidthTest
-    if (bandwidthTest && bandwidthTest !== 'N/A' && bandwidthTest !== 'Unknown') {
-      const bandwidthValue = parseFloat(bandwidthTest.replace(' GB/s', ''))
+    const nvbandwidthTest = result.nvbandwidthTest
+    if (nvbandwidthTest && nvbandwidthTest !== 'N/A' && nvbandwidthTest !== 'Unknown') {
+      const bandwidthValue = parseFloat(nvbandwidthTest.replace(' GB/s', ''))
       if (isNaN(bandwidthValue) || bandwidthValue < benchmark.bw) {
         return 'No Pass'
       }
@@ -970,7 +970,7 @@ export default function TroubleshootingPage({ language, t }: TroubleshootingPage
         return {
           hostname: nodeId,
           gpuType: node?.gpuType || "Unknown",
-          bandwidthTest: selectedCheckItems.includes("bandwidthTest") ? "54.9 GB/s" : "N/A",
+          nvbandwidthTest: selectedCheckItems.includes("nvbandwidthTest") ? "54.9 GB/s" : "N/A",
           p2pBandwidthLatencyTest: selectedCheckItems.includes("p2pBandwidthLatencyTest") ? "736.40 GB/s" : "N/A",
           ncclTests: selectedCheckItems.includes("ncclTests") ? "150.946 GB/s" : "N/A",
           dcgmDiag: selectedCheckItems.includes("dcgmDiag") ? "Pass" : "N/A",
@@ -2063,7 +2063,7 @@ ${executionLog}
     // 根据测试类型获取对应的值和基准值
     switch (testType) {
       case 'bandwidth':
-        testValue = originalResult.bandwidthTest
+        testValue = originalResult.nvbandwidthTest
         benchmarkValue = originalResult.benchmarkData?.bw || originalResult.benchmark?.bw
         break
       case 'p2p':
@@ -2117,7 +2117,7 @@ ${executionLog}
     return {
       nodeName: result.nodeName || result.hostname || 'Unknown',
       gpuType: result.gpuType || 'Unknown',
-      bandwidthTest: formatDiagnosticResult({ originalResult: result }, 'bandwidth'),
+      nvbandwidthTest: formatDiagnosticResult({ originalResult: result }, 'bandwidth'),
       p2pBandwidthLatencyTest: formatDiagnosticResult({ originalResult: result }, 'p2p'),
       ncclTests: formatDiagnosticResult({ originalResult: result }, 'nccl'),
       // DCGM和IB检查根据是否启用来决定显示内容
@@ -2926,7 +2926,7 @@ ${executionLog}
                     <TableHead className="text-tech-green font-semibold">Job ID</TableHead>
                     <TableHead className="text-tech-yellow font-semibold">{t.hostName}</TableHead>
                     <TableHead className="text-tech-orange font-semibold">{t.gpuType}</TableHead>
-                    <TableHead className="text-tech-purple font-semibold">bandwidthTest</TableHead>
+                    <TableHead className="text-tech-purple font-semibold">nvBandwidthTest</TableHead>
                     <TableHead className="text-tech-cyan font-semibold">p2pBandwidthLatencyTest</TableHead>
                     <TableHead className="text-tech-red font-semibold">{t.ncclTests}</TableHead>
                     <TableHead className="text-tech-blue font-semibold">{t.dcgmDiag}</TableHead>
@@ -2991,7 +2991,7 @@ ${executionLog}
                             </TableCell>
                             <TableCell>
                               <PerformanceCell 
-                                value={convertedResult.bandwidthTest} 
+                                value={convertedResult.nvbandwidthTest} 
                                 gpuType={convertedResult.gpuType} 
                                 testType="bw" 
                                 t={t}

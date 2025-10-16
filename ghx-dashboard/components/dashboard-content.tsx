@@ -34,7 +34,7 @@ const mockData = [
   {
     hostname: "gpu-node-001",
     gpuType: "H200",
-    bandwidthTest: "54.9 GB/s",
+    nvbandwidthTest: "54.9 GB/s",
     p2pBandwidthLatencyTest: "736.40 GB/s",
     ncclTests: "150.946 GB/s",
     dcgmDiag: "Pass",
@@ -70,7 +70,7 @@ export function DashboardContent({ language, t }: DashboardContentProps) {
     return {
       nodeName: result.nodeName || result.hostname || 'Unknown',
       gpuType: result.gpuType || 'Unknown',
-      bandwidthTest: result.bandwidthTest || 'N/A',
+      nvbandwidthTest: result.nvbandwidthTest || 'N/A',
       p2pBandwidthLatencyTest: result.p2pBandwidthLatencyTest || 'N/A',
       ncclTests: result.ncclTests || 'N/A',
       dcgmDiag: result.dcgmDiag || 'N/A',
@@ -360,7 +360,7 @@ GPU类型: ${log.gpuType || 'N/A'}
 检查结果: ${getFinalResult(log)}
 
 === 性能测试结果 ===
-带宽测试: ${log.bandwidthTest || 'N/A'}
+内存拷贝带宽测试: ${log.nvbandwidthTest || 'N/A'}
 P2P带宽延迟测试: ${log.p2pBandwidthLatencyTest || 'N/A'}
 NCCL测试: ${log.ncclTests || 'N/A'}
 DCGM诊断: ${log.dcgmDiag || 'N/A'}
@@ -410,7 +410,7 @@ GPU类型: ${log.gpuType || 'N/A'}
 检查结果: ${getFinalResult(log)}
 
 === 性能测试结果 ===
-带宽测试: ${log.bandwidthTest || 'N/A'}
+内存拷贝带宽测试: ${log.nvbandwidthTest || 'N/A'}
 P2P带宽延迟测试: ${log.p2pBandwidthLatencyTest || 'N/A'}
 NCCL测试: ${log.ncclTests || 'N/A'}
 DCGM诊断: ${log.dcgmDiag || 'N/A'}
@@ -470,7 +470,7 @@ GPU类型: ${log.gpuType || 'N/A'}
 检查结果: ${getFinalResult(log)}
 
 === 性能测试结果 ===
-带宽测试: ${log.bandwidthTest || 'N/A'}
+内存拷贝带宽测试: ${log.nvbandwidthTest || 'N/A'}
 P2P带宽延迟测试: ${log.p2pBandwidthLatencyTest || 'N/A'}
 NCCL测试: ${log.ncclTests || 'N/A'}
 DCGM诊断: ${log.dcgmDiag || 'N/A'}
@@ -562,7 +562,7 @@ ${log.executionLog || '无日志'}
         <CardContent>
           <div className="space-y-4 text-sm text-foreground">
             <div>
-              <strong>bandwidthTest:</strong> {t.bandwidthTestDesc}
+              <strong>nvbandwidthTest:</strong> {t.nvbandwidthTestDesc}
             </div>
             <div>
               <strong>p2pBandwidthLatencyTest:</strong> {t.p2pTestDesc}
@@ -720,7 +720,7 @@ ${log.executionLog || '无日志'}
                     NCCL_Tests
                   </TableHead>
                   <TableHead className="font-semibold text-center text-tech-orange">
-                    BandwidthTest
+                    nvBandwidthTest
                   </TableHead>
                 </TableRow>
               </TableHeader>

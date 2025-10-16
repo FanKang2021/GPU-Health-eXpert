@@ -98,12 +98,10 @@ RUN mkdir /tmp/gdrcopy && \
 
 FROM builder-base AS perftest
 # IB perftest with GDR
-ENV PERFTEST_VERSION_HASH=5b47ede
-RUN mkdir /tmp/build && \
-    cd /tmp/build && \
-    git clone https://github.com/coreweave/perftest && \
-    cd perftest && \
-    git checkout $PERFTEST_VERSION_HASH && \
+#ENV PERFTEST_VERSION_HASH=5b47ede
+RUN mkdir /tmp/build
+COPY perftest /tmp/build/perftest 
+RUN cd /tmp/build/perftest && \
     ./autogen.sh && \
     ./configure CUDA_H_PATH=/usr/local/cuda/include/cuda.h && \
     make -j20 && \
@@ -113,20 +111,20 @@ RUN mkdir /tmp/build && \
     rm -r /tmp/build
 
 
-FROM builder-base AS cuda-samples
+#FROM builder-base AS cuda-samples
 # Build GPU Bandwidthtest and p2pBandwidthLatencyTest from samples
-RUN mkdir /tmp/build
-COPY Samples /tmp/build/Samples
-COPY Common /tmp/build/Common
-RUN mkdir -p /tmp/cuda-samples/usr/bin && \
-    cd /tmp/build/Samples/1_Utilities/bandwidthTest && \
-    make -j20 && \
-    install bandwidthTest /tmp/cuda-samples/usr/bin/ && \
-    cd /tmp/build/Samples/5_Domain_Specific/p2pBandwidthLatencyTest && \
-    make -j20 && \
-    install p2pBandwidthLatencyTest /tmp/cuda-samples/usr/bin/ && \
-    cd /tmp && \
-    rm -r /tmp/build
+# RUN mkdir /tmp/build
+# COPY Samples /tmp/build/Samples
+# COPY Common /tmp/build/Common
+# RUN mkdir -p /tmp/cuda-samples/usr/bin && \
+#     cd /tmp/build/Samples/1_Utilities/bandwidthTest && \
+#     make -j20 && \
+#     install bandwidthTest /tmp/cuda-samples/usr/bin/ && \
+#     cd /tmp/build/Samples/5_Domain_Specific/p2pBandwidthLatencyTest && \
+#     make -j20 && \
+#     install p2pBandwidthLatencyTest /tmp/cuda-samples/usr/bin/ && \
+#     cd /tmp && \
+#     rm -r /tmp/build
 
 
 FROM builder-base AS hpcx
@@ -170,7 +168,7 @@ RUN --mount=type=bind,from=gdrcopy,source=/tmp/gdrcopy,target=/tmp/install \
     cd /tmp/install && dpkg -i *.deb
 
 COPY --link --from=perftest /tmp/perftest/ /
-COPY --link --from=cuda-samples /tmp/cuda-samples/ /
+#COPY --link --from=cuda-samples /tmp/cuda-samples/ /
 COPY --link --from=hpcx /opt/hpcx /opt/hpcx
 
 RUN ldconfig
@@ -301,6 +299,12 @@ COPY ./gpu_check_job.py /opt/gpu_check_job.py
 # Make scripts executable
 RUN chmod +x /opt/ib_health_check.sh
 RUN chmod +x /opt/gpu_check_job.py
+
+
+#ADD nvBandwidthtest and p2pBandwidthLatencyTest
+COPY nvbandwidth /usr/bin/nvbandwidth
+COPY p2pBandwidthLatencyTest /usr/bin/p2pBandwidthLatencyTest
+RUN chmod +x /usr/bin/nvbandwidth && chmod +x /usr/bin/p2pBandwidthLatencyTest
 
 # Set the default command for K8s CronJob
 CMD ["python3", "/opt/gpu_check_job.py"]

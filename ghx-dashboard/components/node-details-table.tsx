@@ -121,7 +121,7 @@ export function NodeDetailsTable({
     if (!benchmark) return 'Unknown'
     
     // 检查带宽测试
-    const bandwidthValue = parseValue(item.bandwidthTest)
+    const bandwidthValue = parseValue(item.nvbandwidthTest)
     if (bandwidthValue < benchmark.bw) {
       return 'No Pass'
     }
@@ -351,7 +351,7 @@ export function NodeDetailsTable({
               <TableRow className="bg-secondary/50 hover:bg-secondary/70 transition-colors duration-200">
                 <TableHead className="text-tech-blue font-semibold">{t.hostName}</TableHead>
                 <TableHead className="text-tech-green font-semibold">{t.gpuType}</TableHead>
-                <TableHead className="text-tech-yellow font-semibold">bandwidthTest</TableHead>
+                <TableHead className="text-tech-yellow font-semibold">nvBandwidthTest</TableHead>
                 <TableHead className="text-tech-orange font-semibold">
                   p2pBandwidthLatencyTest
                 </TableHead>
@@ -412,7 +412,7 @@ export function NodeDetailsTable({
                     </TableCell>
                     <TableCell className="text-foreground">{item.gpuType}</TableCell>
                     <TableCell>
-                      <PerformanceCell value={item.bandwidthTest} gpuType={item.gpuType} testType="bw" />
+                      <PerformanceCell value={item.nvbandwidthTest} gpuType={item.gpuType} testType="bw" />
                     </TableCell>
                     <TableCell>
                       <PerformanceCell value={item.p2pBandwidthLatencyTest} gpuType={item.gpuType} testType="p2p" />

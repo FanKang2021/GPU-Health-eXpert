@@ -60,7 +60,7 @@ def get_test_configuration():
     """获取测试配置"""
     # 测试项目名称映射：前端名称 -> 脚本内部名称
     test_name_mapping = {
-        "bandwidthTest": "bandwidth",
+        "nvbandwidthTest": "bandwidth",
         "p2pBandwidthLatencyTest": "p2p", 
         "ncclTests": "nccl",
         "dcgmDiag": "dcgm",
@@ -68,7 +68,7 @@ def get_test_configuration():
     }
     
     # 获取环境变量中的测试项目
-    enabled_tests_env = os.environ.get("ENABLED_TESTS", "bandwidthTest,p2pBandwidthLatencyTest,ncclTests,dcgmDiag,ibCheck")
+    enabled_tests_env = os.environ.get("ENABLED_TESTS", "nvbandwidthTest,p2pBandwidthLatencyTest,ncclTests,dcgmDiag,ibCheck")
     
     # 将环境变量字符串转换为列表，并映射到内部名称
     enabled_tests_raw = [test.strip() for test in enabled_tests_env.split(",") if test.strip()]
@@ -83,6 +83,7 @@ def get_test_configuration():
     
     config = {
         "enabled_tests": enabled_tests,
+        "enabled_tests_original": enabled_tests_raw,  # 保存原始的前端名称
         "dcgm_level": int(os.environ.get("DCGM_DIAG_LEVEL", "1")),
         "job_type": os.environ.get("JOB_TYPE", "cron"),  # cronjob默认值改为cron
         "job_id": os.environ.get("JOB_ID", "unknown"),
@@ -209,125 +210,170 @@ class GPUChecker:
             return "Unknown"
 
     def run_bandwidth_test(self) -> Dict[str, Any]:
-        """运行带宽测试"""
+        """运行带宽测试 - 使用nvbandwidth工具"""
         if "bandwidth" not in self.config["enabled_tests"]:
             return {"value": "Skipped", "raw_value": 0, "status": "skipped"}
             
         try:
-            print("=== 开始带宽测试 ===")
-            self.log_collector.add_log("=== 开始带宽测试 ===")
+            print("=== 开始带宽测试 (使用nvbandwidth工具) ===")
+            self.log_collector.add_log("=== 开始带宽测试 (使用nvbandwidth工具) ===")
             sys.stdout.flush()
             
-            # 运行8个GPU的带宽测试 - 使用更兼容的语法
-            cmd = "for i in 0 1 2 3 4 5 6 7; do echo \"=== Testing GPU $i ===\"; /usr/bin/bandwidthTest --device=$i; done"
-            print(f"执行命令: {cmd}")
-            self.log_collector.add_log(f"执行命令: {cmd}")
+            # 运行host_to_device_memcpy_ce测试
+            cmd_h2d = "/usr/bin/nvbandwidth -t host_to_device_memcpy_ce"
+            print(f"执行Host to Device命令: {cmd_h2d}")
+            self.log_collector.add_log(f"执行Host to Device命令: {cmd_h2d}")
             sys.stdout.flush()
             
-            print("正在执行带宽测试，请稍候...")
-            self.log_collector.add_log("正在执行带宽测试，请稍候...")
+            print("正在执行Host to Device带宽测试，请稍候...")
+            self.log_collector.add_log("正在执行Host to Device带宽测试，请稍候...")
             sys.stdout.flush()
             
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=600)
+            result_h2d = subprocess.run(cmd_h2d, shell=True, capture_output=True, text=True, timeout=300)
             
-            print(f"带宽测试命令执行完成，返回码: {result.returncode}")
-            self.log_collector.add_log(f"带宽测试命令执行完成，返回码: {result.returncode}")
+            print(f"Host to Device测试命令执行完成，返回码: {result_h2d.returncode}")
+            self.log_collector.add_log(f"Host to Device测试命令执行完成，返回码: {result_h2d.returncode}")
             sys.stdout.flush()
             
+            # 运行device_to_host_memcpy_ce测试
+            cmd_d2h = "/usr/bin/nvbandwidth -t device_to_host_memcpy_ce"
+            print(f"执行Device to Host命令: {cmd_d2h}")
+            self.log_collector.add_log(f"执行Device to Host命令: {cmd_d2h}")
+            sys.stdout.flush()
+            
+            print("正在执行Device to Host带宽测试，请稍候...")
+            self.log_collector.add_log("正在执行Device to Host带宽测试，请稍候...")
+            sys.stdout.flush()
+            
+            result_d2h = subprocess.run(cmd_d2h, shell=True, capture_output=True, text=True, timeout=300)
+            
+            print(f"Device to Host测试命令执行完成，返回码: {result_d2h.returncode}")
+            self.log_collector.add_log(f"Device to Host测试命令执行完成，返回码: {result_d2h.returncode}")
+            sys.stdout.flush()
+                
             # 显示命令的真实输出
-            if result.stdout:
-                print("=== 带宽测试命令输出 ===")
-                self.log_collector.add_log("=== 带宽测试命令输出 ===")
-                print(result.stdout)
-                self.log_collector.add_log(result.stdout)
+            if result_h2d.stdout:
+                print("=== Host to Device测试命令输出 ===")
+                self.log_collector.add_log("=== Host to Device测试命令输出 ===")
+                print(result_h2d.stdout)
+                self.log_collector.add_log(result_h2d.stdout)
                 sys.stdout.flush()
             
-            if result.stderr:
-                print("=== 带宽测试命令错误输出 ===")
-                self.log_collector.add_log("=== 带宽测试命令错误输出 ===")
-                print(result.stderr)
-                self.log_collector.add_log(result.stderr)
+            if result_d2h.stdout:
+                print("=== Device to Host测试命令输出 ===")
+                self.log_collector.add_log("=== Device to Host测试命令输出 ===")
+                print(result_d2h.stdout)
+                self.log_collector.add_log(result_d2h.stdout)
                 sys.stdout.flush()
             
-            if result.returncode == 0:
-                print("开始解析带宽测试结果...")
-                self.log_collector.add_log("开始解析带宽测试结果...")
+            if result_h2d.stderr:
+                print("=== Host to Device测试命令错误输出 ===")
+                self.log_collector.add_log("=== Host to Device测试命令错误输出 ===")
+                print(result_h2d.stderr)
+                self.log_collector.add_log(result_h2d.stderr)
+                sys.stdout.flush()
+            
+            if result_d2h.stderr:
+                print("=== Device to Host测试命令错误输出 ===")
+                self.log_collector.add_log("=== Device to Host测试命令错误输出 ===")
+                print(result_d2h.stderr)
+                self.log_collector.add_log(result_d2h.stderr)
+                sys.stdout.flush()
+            
+            if result_h2d.returncode == 0 and result_d2h.returncode == 0:
+                print("开始解析nvbandwidth测试结果...")
+                self.log_collector.add_log("开始解析nvbandwidth测试结果...")
                 sys.stdout.flush()
                 
-                # 解析带宽测试输出 - 只取Host to Device和Device to Host的值
-                lines = result.stdout.split('\n')
-                bwlist = []
-                current_gpu = None
-                bandwidth_type = None
+                # 解析Host to Device结果
+                h2d_bandwidth = self._parse_nvbandwidth_bandwidth(result_h2d.stdout, "host_to_device_memcpy_ce")
+                d2h_bandwidth = self._parse_nvbandwidth_bandwidth(result_d2h.stdout, "device_to_host_memcpy_ce")
                 
-                for line_num, line in enumerate(lines):
-                    # 检测GPU设备
-                    if "Device " in line and ":" in line:
-                        current_gpu = line.strip()
-                        print(f"检测到GPU设备: {current_gpu}")
-                        self.log_collector.add_log(f"检测到GPU设备: {current_gpu}")
-                        bandwidth_type = None  # 重置带宽类型
-                    
-                    # 检测带宽类型
-                    elif "Host to Device Bandwidth" in line:
-                        bandwidth_type = "Host to Device"
-                    elif "Device to Host Bandwidth" in line:
-                        bandwidth_type = "Device to Host"
-                    elif "Device to Device Bandwidth" in line:
-                        bandwidth_type = "Device to Device"  # 跳过这个类型
-                    
-                    # 查找包含"32000000"的行（32MB传输）
-                    elif "32000000" in line and bandwidth_type and bandwidth_type != "Device to Device":
-                        line_parts = line.split()
-                        if len(line_parts) >= 2:
-                            try:
-                                bw_value = float(line_parts[1])
-                                bwlist.append(bw_value)
-                                print(f"找到{bandwidth_type}带宽值: {bw_value} GB/s (GPU: {current_gpu})")
-                                self.log_collector.add_log(f"找到{bandwidth_type}带宽值: {bw_value} GB/s (GPU: {current_gpu})")
-                            except (IndexError, ValueError):
-                                continue
-                
-                print(f"解析完成，找到 {len(bwlist)} 个有效带宽值")
-                self.log_collector.add_log(f"解析完成，找到 {len(bwlist)} 个有效带宽值")
-                sys.stdout.flush()
-                
-                if bwlist:
-                    # 根据参考代码：返回最小值
-                    min_bw = min(bwlist)
-                    result_msg = f"带宽测试完成: {min_bw:.1f} GB/s (最小值，基于{len(bwlist)}个有效值)"
+                if h2d_bandwidth > 0 and d2h_bandwidth > 0:
+                    # 取两个测试的最小值作为最终结果
+                    min_bw = min(h2d_bandwidth, d2h_bandwidth)
+                    result_msg = f"nvbandwidth测试完成: {min_bw:.1f} GB/s (H2D: {h2d_bandwidth:.1f}, D2H: {d2h_bandwidth:.1f})"
                     print(f"=== {result_msg} ===")
                     self.log_collector.add_log(result_msg)
                     sys.stdout.flush()
                     return {"value": f"{min_bw:.1f} GB/s", "raw_value": min_bw, "status": "completed"}
                 else:
-                    error_msg = "带宽测试解析失败"
+                    error_msg = "nvbandwidth测试解析失败"
                     print(f"=== {error_msg} ===")
                     self.log_collector.add_log(error_msg)
                     sys.stdout.flush()
                     return {"value": "解析失败", "raw_value": 0, "status": "failed"}
             else:
-                error_msg = f"带宽测试失败，返回码: {result.returncode}"
+                error_msg = f"nvbandwidth测试失败，H2D返回码: {result_h2d.returncode}, D2H返回码: {result_d2h.returncode}"
                 print(f"=== {error_msg} ===")
                 self.log_collector.add_log(error_msg)
-                if result.stderr:
-                    print(f"错误输出: {result.stderr}")
-                    self.log_collector.add_log(f"错误输出: {result.stderr}")
+                if result_h2d.stderr:
+                    print(f"H2D错误输出: {result_h2d.stderr}")
+                    self.log_collector.add_log(f"H2D错误输出: {result_h2d.stderr}")
+                if result_d2h.stderr:
+                    print(f"D2H错误输出: {result_d2h.stderr}")
+                    self.log_collector.add_log(f"D2H错误输出: {result_d2h.stderr}")
                 sys.stdout.flush()
                 return {"value": "测试失败", "raw_value": 0, "status": "failed"}
                 
         except subprocess.TimeoutExpired:
-            error_msg = "带宽测试超时"
+            error_msg = "nvbandwidth测试超时"
             print(f"=== {error_msg} ===")
             self.log_collector.add_log(error_msg)
             sys.stdout.flush()
             return {"value": "测试超时", "raw_value": 0, "status": "timeout"}
         except Exception as e:
-            error_msg = f"带宽测试异常: {str(e)}"
+            error_msg = f"nvbandwidth测试异常: {str(e)}"
             print(f"=== {error_msg} ===")
             self.log_collector.add_log(error_msg)
             sys.stdout.flush()
             return {"value": f"异常: {str(e)}", "raw_value": 0, "status": "error"}
+
+    def _parse_nvbandwidth_bandwidth(self, output: str, test_type: str) -> float:
+        """解析nvbandwidth输出中的内存拷贝带宽值"""
+        try:
+            lines = output.split('\n')
+            bandwidth_values = []
+            
+            # 查找包含内存拷贝带宽值的行（如： 0     55.25     55.24     55.24...）
+            for line in lines:
+                line = line.strip()
+                # 匹配格式：以数字开头（行号），后面跟着多个浮点数（实际的带宽数据行）
+                if line and line[0].isdigit() and len(line.split()) >= 3:
+                    parts = line.split()
+                    # 确保第一个元素是数字（行号），第二个元素是浮点数（带宽值）
+                    try:
+                        row_num = int(parts[0])
+                        # 跳过第一个元素（行号），解析后面的带宽值
+                        line_values = []
+                        for part in parts[1:]:
+                            try:
+                                value = float(part)
+                                # 只接受合理的带宽值（10-1000 GB/s范围）
+                                if 10.0 <= value <= 1000.0:
+                                    line_values.append(value)
+                            except ValueError:
+                                break  # 遇到非数字就停止
+                        
+                        if line_values:
+                            bandwidth_values.extend(line_values)
+                            print(f"找到{test_type}内存拷贝带宽值: {line_values}")
+                            self.log_collector.add_log(f"找到{test_type}内存拷贝带宽值: {line_values}")
+                    except (ValueError, IndexError):
+                        continue
+            
+            # 如果找到带宽值，返回最小值
+            if bandwidth_values:
+                min_bandwidth = min(bandwidth_values)
+                print(f"{test_type}最小内存拷贝带宽: {min_bandwidth} GB/s")
+                self.log_collector.add_log(f"{test_type}最小内存拷贝带宽: {min_bandwidth} GB/s")
+                return min_bandwidth
+            
+            return 0.0
+        except Exception as e:
+            print(f"解析{test_type}内存拷贝带宽失败: {e}")
+            self.log_collector.add_log(f"解析{test_type}内存拷贝带宽失败: {e}")
+            return 0.0
 
     def run_p2p_test(self) -> Dict[str, Any]:
         """运行P2P测试"""
@@ -757,8 +803,8 @@ class GPUChecker:
 
     def run_selected_tests(self) -> Dict[str, Any]:
         """运行选定的测试项目"""
-        print(f"开始运行选定的GPU检查测试: {self.config['enabled_tests']}")
-        self.log_collector.add_log(f"开始运行选定的GPU检查测试: {self.config['enabled_tests']}")
+        print(f"开始运行选定的GPU检查测试: {self.config.get('enabled_tests_original', self.config['enabled_tests'])}")
+        self.log_collector.add_log(f"开始运行选定的GPU检查测试: {self.config.get('enabled_tests_original', self.config['enabled_tests'])}")
         
         # 获取主机名和节点信息
         hostname = subprocess.run(['hostname'], capture_output=True, text=True).stdout.strip()
@@ -834,7 +880,7 @@ def main():
         
         # 获取测试配置
         config = get_test_configuration()
-        print(f"测试配置: {config}")
+        print(f"测试配置: {{'enabled_tests': {config['enabled_tests_original']}, 'dcgm_level': {config['dcgm_level']}, 'job_type': '{config['job_type']}', 'job_id': '{config['job_id']}', 'selected_nodes': {config['selected_nodes']}}}")
         
         # 创建GPU检查器
         checker = GPUChecker(config)

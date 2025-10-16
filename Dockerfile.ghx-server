@@ -31,7 +31,7 @@ COPY backend_rate_limit.py /app/
 # COPY job-template.yaml /app/  #已通过configmap传递
 
 # 安装Python依赖（包含频率限制相关依赖）
-RUN pip install Flask Flask-CORS Werkzeug flask-limiter kubernetes
+RUN pip install Flask Flask-CORS Werkzeug flask-limiter kubernetes -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 创建共享目录和日志目录
 RUN mkdir -p /shared/gpu-inspection-results/cron \

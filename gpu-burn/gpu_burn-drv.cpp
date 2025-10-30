@@ -94,6 +94,22 @@ void _checkError(cublasStatus_t rCode, std::string file, int line, std::string d
     }
 }
 
+#if defined(CUDA_VERSION)
+static CUresult createContextCompat(CUcontext *ctx, CUdevice dev) {
+#if CUDA_VERSION >= 13000
+    CUctxCreateParams params;
+    memset(&params, 0, sizeof(params));
+    return cuCtxCreate(ctx, &params, 0u, dev);
+#else
+    return cuCtxCreate(ctx, 0u, dev);
+#endif
+}
+#else
+static CUresult createContextCompat(CUcontext *ctx, CUdevice dev) {
+    return cuCtxCreate(ctx, 0u, dev);
+}
+#endif
+
 #define checkError(rCode, ...)                                                 \
     _checkError(rCode, __FILE__, __LINE__, ##__VA_ARGS__)
 
@@ -110,7 +126,7 @@ template <class T> class GPU_Test {
     GPU_Test(int dev, bool doubles, bool tensors, const char *kernelFile)
         : d_devNumber(dev), d_doubles(doubles), d_tensors(tensors), d_kernelFile(kernelFile){
         checkError(cuDeviceGet(&d_dev, d_devNumber));
-        checkError(cuCtxCreate(&d_ctx, 0, d_dev));
+        checkError(createContextCompat(&d_ctx, d_dev));
 
         bind();
 

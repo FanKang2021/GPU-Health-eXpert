@@ -187,7 +187,7 @@ export function SidebarNavigation({ language, currentPage, onPageChange }: Sideb
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-1.5 h-1.5 bg-tech-green rounded-full animate-pulse" />
-              <span className="font-mono text-tech-green">v1.1.9</span>
+              <span className="font-mono text-tech-green">v1.2.3</span>
             </div>
           </div>
         </div>
